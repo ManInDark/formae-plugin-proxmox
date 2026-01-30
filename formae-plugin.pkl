@@ -1,0 +1,22 @@
+/*
+ * Formae Plugin Manifest
+ *
+ * This file defines metadata for your Formae plugin.
+ * Update the values below to match your plugin.
+ */
+
+name = "proxmox"
+
+version = "0.1.0"
+
+namespace = "PROXMOX"
+
+description = "Proxmox Plugin"
+
+license = "Apache-2.0"
+
+minFormaeVersion = "0.80.1"
+
+output {
+  renderer = new JsonRenderer {}
+}

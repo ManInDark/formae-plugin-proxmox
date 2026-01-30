@@ -1,0 +1,21 @@
+module proxmox.lxc
+
+import "@formae/formae.pkl"
+
+@formae.ResourceHint {
+    type = "PROXMOX::Service::LXC"
+    identifier = "$.vmid"
+}
+class ExampleResource extends formae.Resource {
+    fixed hidden type: String = "PROXMOX::Service::LXC"
+
+    @formae.FieldHint { createOnly = true }
+    vmid: String
+
+    @formae.FieldHint {}
+    name: String
+
+    @formae.FieldHint {}
+    description: String = "No description"
+
+}
