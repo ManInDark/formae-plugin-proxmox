@@ -1,4 +1,4 @@
-module proxmox.lxc
+module proxmox
 
 import "@formae/formae.pkl"
 
@@ -11,6 +11,9 @@ class ExampleResource extends formae.Resource {
 
     @formae.FieldHint { createOnly = true }
     vmid: String
+
+    @formae.FieldHint { createOnly = true }
+    ostemplate: String
 
     @formae.FieldHint {}
     name: String

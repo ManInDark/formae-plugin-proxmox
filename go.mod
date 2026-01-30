@@ -8,6 +8,12 @@ require (
 )
 
 require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
+
+require (
 	ergo.services/actor/statemachine v0.0.0-20251202053101-c0aa08b403e5 // indirect
 	ergo.services/ergo v1.999.310 // indirect
 	github.com/apple/pkl-go v0.12.0 // indirect
@@ -20,6 +26,7 @@ require (
 	github.com/masterminds/semver v1.5.0 // indirect
 	github.com/platform-engineering-labs/formae/pkg/api/model v0.1.1 // indirect
 	github.com/platform-engineering-labs/formae/pkg/model v0.1.2 // indirect
+	github.com/stretchr/testify v1.11.1
 	github.com/theory/jsonpath v0.10.2 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect

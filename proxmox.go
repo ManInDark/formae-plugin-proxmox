@@ -5,12 +5,76 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"strconv"
 
 	"github.com/platform-engineering-labs/formae/pkg/plugin"
 	"github.com/platform-engineering-labs/formae/pkg/plugin/resource"
 )
+
+// https://pve.proxmox.com/pve-docs/api-viewer/
+type TargetConfig struct {
+	URL  string `json:"url"`
+	NODE string `json:"node"`
+}
+
+type LXCProperties struct {
+	VMID        int    `json:"vmid"`
+	NAME        string `json:"name"`
+	DESCRIPTION string `json:"description"`
+	OSTEMPLATE  string `json:"ostemplate"`
+}
+
+func parseTargetConfig(data json.RawMessage) (*TargetConfig, error) {
+	var cfg TargetConfig
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return nil, fmt.Errorf("invalid target config: %w", err)
+	}
+	if cfg.URL == "" {
+		return nil, fmt.Errorf("target config missing 'url'")
+	}
+	if cfg.NODE == "" {
+		return nil, fmt.Errorf("target config missing 'node'")
+	}
+	return &cfg, nil
+}
+
+func getCredentials() (username, token string, err error) {
+	username = os.Getenv("PROXMOX_USERNAME")
+	token = os.Getenv("PROXMOX_TOKEN")
+	if username == "" {
+		return "", "", fmt.Errorf("PROXMOX_USERNAME not set")
+	}
+	if token == "" {
+		return "", "", fmt.Errorf("PROXMOX_TOKEN not set")
+	}
+	return username, token, nil
+}
+
+func parseLXCProperties(data json.RawMessage) (*LXCProperties, error) {
+	var props LXCProperties
+	if err := json.Unmarshal(data, &props); err != nil {
+		return nil, fmt.Errorf("invalid file properties: %w", err)
+	}
+	if props.VMID == 0 {
+		return nil, fmt.Errorf("vmid missing")
+	}
+	if props.NAME == "" {
+		return nil, fmt.Errorf("name missing")
+	}
+	if props.OSTEMPLATE == "" {
+		return nil, fmt.Errorf("ostemplate missing")
+	}
+	return &props, nil
+}
 
 // ErrNotImplemented is returned by stub methods that need implementation.
 var ErrNotImplemented = errors.New("not implemented")
@@ -58,7 +122,7 @@ func (p *Plugin) LabelConfig() plugin.LabelConfig {
 	return plugin.LabelConfig{
 		// Default JSONPath query to extract label from resources
 		// Example for tagged resources: $.Tags[?(@.Key=='Name')].Value
-		DefaultQuery: "$.Name", // TODO: Adjust for your provider
+		DefaultQuery: "$.name",
 
 		// Override for specific resource types
 		ResourceOverrides: map[string]string{
@@ -73,24 +137,83 @@ func (p *Plugin) LabelConfig() plugin.LabelConfig {
 
 // Create provisions a new resource.
 func (p *Plugin) Create(ctx context.Context, req *resource.CreateRequest) (*resource.CreateResult, error) {
-	// TODO: Implement resource creation
-	//
-	// 1. Parse req.Properties to get resource configuration (json.RawMessage)
-	// 2. Parse req.TargetConfig to get provider credentials/config
-	// 3. Call your provider's API to create the resource
-	// 4. Return ProgressResult with:
-	//    - NativeID: the provider's identifier for the resource
-	//    - OperationStatus: Success, Failure, or InProgress
-	//    - If InProgress, set RequestID for status polling
+
+	log.Println(req.Properties)
+
+	props, err := parseLXCProperties(req.Properties)
+	if err != nil {
+		log.Println(err.Error())
+		return &resource.CreateResult{
+			ProgressResult: &resource.ProgressResult{
+				Operation:       resource.OperationCreate,
+				OperationStatus: resource.OperationStatusFailure,
+				ErrorCode:       resource.OperationErrorCodeInvalidRequest,
+				StatusMessage:   err.Error(),
+			},
+		}, nil
+	}
+
+	log.Println("LXC Properties: ", props.VMID, props.NAME, props.OSTEMPLATE, props.DESCRIPTION)
+
+	config, err := parseTargetConfig(req.TargetConfig)
+	if err != nil {
+		return &resource.CreateResult{
+			ProgressResult: &resource.ProgressResult{
+				Operation:       resource.OperationCreate,
+				OperationStatus: resource.OperationStatusFailure,
+				ErrorCode:       resource.OperationErrorCodeInternalFailure,
+				StatusMessage:   err.Error(),
+			},
+		}, nil
+	}
+
+	username, token, err := getCredentials()
+	if err != nil {
+		return &resource.CreateResult{
+			ProgressResult: &resource.ProgressResult{
+				Operation:       resource.OperationCreate,
+				OperationStatus: resource.OperationStatusFailure,
+				ErrorCode:       resource.OperationErrorCodeInternalFailure,
+				StatusMessage:   err.Error(),
+			},
+		}, nil
+	}
+
+	client := &http.Client{}
+
+	// data := map[string]any{"node": config.NODE, "ostemplate": props.OSTEMPLATE, "id": props.VMID, "hostname": props.NAME, "description": props.DESCRIPTION}
+	// jsonBody, err := json.Marshal(data)
+
+	arguments := "vmid=" + strconv.Itoa(props.VMID) + "&ostemplate=" + props.OSTEMPLATE + "&hostname=" + props.NAME
+
+	request, err := http.NewRequest("POST", config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", bytes.NewBuffer([]byte(arguments)))
+	request.Header.Set("Authorization", "PVEAPIToken="+username+"="+token)
+
+	resp, err := client.Do(request)
+
+	if err != nil {
+		return &resource.CreateResult{
+			ProgressResult: &resource.ProgressResult{
+				Operation:       resource.OperationCreate,
+				OperationStatus: resource.OperationStatusFailure,
+				ErrorCode:       resource.OperationErrorCodeInternalFailure,
+				StatusMessage:   err.Error(),
+			},
+		}, nil
+	}
+
+	body, err := io.ReadAll(resp.Body)
+
+	log.Println("Response StatusCode: ", resp.Status)
+	log.Println("Response Body: ", string(body))
 
 	return &resource.CreateResult{
 		ProgressResult: &resource.ProgressResult{
 			Operation:       resource.OperationCreate,
-			OperationStatus: resource.OperationStatusFailure,
-			ErrorCode:       resource.OperationErrorCodeInternalFailure,
-			StatusMessage:   "Create not implemented",
+			OperationStatus: resource.OperationStatusSuccess,
+			NativeID:        strconv.Itoa(props.VMID),
 		},
-	}, ErrNotImplemented
+	}, nil
 }
 
 // Read retrieves the current state of a resource.
