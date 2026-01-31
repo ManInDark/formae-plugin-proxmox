@@ -13,6 +13,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/platform-engineering-labs/formae/pkg/plugin"
 	"github.com/platform-engineering-labs/formae/pkg/plugin/resource"
@@ -435,16 +436,47 @@ func (p *Plugin) Status(ctx context.Context, req *resource.StatusRequest) (*reso
 // List returns all resource identifiers of a given type.
 // Called during discovery to find unmanaged resources.
 func (p *Plugin) List(ctx context.Context, req *resource.ListRequest) (*resource.ListResult, error) {
-	// TODO: Implement resource listing for discovery
-	//
-	// 1. Use req.ResourceType to determine what to list
-	// 2. Parse req.TargetConfig for provider credentials
-	// 3. Use req.PageToken/PageSize for pagination
-	// 4. Call your provider's API to list resources
-	// 5. Return NativeIDs and NextPageToken (if more pages)
+
+	username, token, err := getCredentials()
+	if err != nil {
+		return &resource.ListResult{
+			NativeIDs: []string{},
+		}, err
+	}
+
+	config, err := parseTargetConfig(req.TargetConfig)
+	if err != nil {
+		return &resource.ListResult{
+			NativeIDs: []string{},
+		}, err
+	}
+
+	client := &http.Client{}
+
+	var props StatusGeneralResponse
+
+	request, err := http.NewRequest("GET", config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", nil)
+	if err != nil {
+		return &resource.ListResult{
+			NativeIDs: []string{},
+		}, err
+	}
+	request.Header.Set("Authorization", "PVEAPIToken="+username+"="+token)
+
+	resp, err := client.Do(request)
+
+	data, err := io.ReadAll(resp.Body)
+
+	json.Unmarshal(data, &props)
+
+	nativeIds := make([]string, 0, len(props.Data))
+
+	for _, value := range props.Data {
+		nativeIds = append(nativeIds, strconv.Itoa(value.VMID))
+	}
 
 	return &resource.ListResult{
-		NativeIDs:     []string{},
+		NativeIDs:     nativeIds,
 		NextPageToken: nil,
-	}, ErrNotImplemented
+	}, nil
 }

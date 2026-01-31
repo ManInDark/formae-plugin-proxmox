@@ -153,6 +153,19 @@ func TestUpdate(t *testing.T) {
 	// test if update has happened
 }
 
+func TestList(t *testing.T) {
+	ctx := context.Background()
+	plugin := &Plugin{}
+
+	result, err := plugin.List(ctx, &resource.ListRequest{
+		ResourceType: "PROXMOX::Service::LXC",
+		TargetConfig: testTargetConfig(),
+	})
+	require.NoError(t, err, "ListRequest should not return an error")
+
+	require.Contains(t, result.NativeIDs, "200", "List should include created LXC")
+}
+
 func TestDelete(t *testing.T) {
 	ctx := context.Background()
 	plugin := &Plugin{}

@@ -34,6 +34,14 @@ type DeleteRequest struct {
 	TargetConfig json.RawMessage
 }
 
+type ListRequest struct {
+	ResourceType         string
+	TargetConfig         json.RawMessage
+	PageSize             int32
+	PageToken            *string
+	AdditionalProperties map[string]string
+}
+
 type StatusLXCGeneral struct {
 	Status  string `json:"status"`
 	NetIn   int    `json:"netin"`
