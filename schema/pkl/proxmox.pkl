@@ -2,9 +2,22 @@ module proxmox
 
 import "@formae/formae.pkl"
 
+open class Config {
+    hidden fixed type: String = "SFTP"
+
+    url: String
+
+    node: String
+
+    fixed Type: String = type
+    fixed Url: String = url
+    fixed Node: String = node
+}
+
 @formae.ResourceHint {
     type = "PROXMOX::Service::LXC"
     identifier = "$.vmid"
+    discoverable = true
 }
 class LXC extends formae.Resource {
     fixed hidden type: String = "PROXMOX::Service::LXC"
@@ -12,7 +25,10 @@ class LXC extends formae.Resource {
     @formae.FieldHint { createOnly = true }
     vmid: String
 
-    @formae.FieldHint { createOnly = true }
+    @formae.FieldHint {
+        createOnly = true
+        writeOnly = true
+    }
     ostemplate: String
 
     @formae.FieldHint {}

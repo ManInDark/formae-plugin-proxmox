@@ -10,7 +10,7 @@ type TargetConfig struct {
 type LXCProperties struct {
 	VMID        string `json:"vmid"`
 	Hostname    string `json:"hostname"`
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 	OSTemplate  string `json:"ostemplate"`
 }
 
