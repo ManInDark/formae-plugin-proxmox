@@ -119,3 +119,7 @@ conformance-test-discovery: install
 	echo "Post-test cleanup..."; \
 	./scripts/ci/clean-environment.sh || true; \
 	exit $$TEST_EXIT
+
+test-request:
+	curl -k -H "Authorization: PVEAPIToken=$$PROXMOX_USERNAME=$$PROXMOX_TOKEN" "https://proxmox.mid:8006/api2/json/nodes/proxmox/lxc" | jq
+	curl -k -H "Authorization: PVEAPIToken=$$PROXMOX_USERNAME=$$PROXMOX_TOKEN" "https://proxmox.mid:8006/api2/json/nodes/proxmox/lxc/200/config" | jq

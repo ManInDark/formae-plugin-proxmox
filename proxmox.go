@@ -9,72 +9,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"os"
-	"strconv"
 
 	"github.com/platform-engineering-labs/formae/pkg/plugin"
 	"github.com/platform-engineering-labs/formae/pkg/plugin/resource"
 )
 
 // https://pve.proxmox.com/pve-docs/api-viewer/
-type TargetConfig struct {
-	URL  string `json:"url"`
-	NODE string `json:"node"`
-}
-
-type LXCProperties struct {
-	VMID        int    `json:"vmid"`
-	NAME        string `json:"name"`
-	DESCRIPTION string `json:"description"`
-	OSTEMPLATE  string `json:"ostemplate"`
-}
-
-func parseTargetConfig(data json.RawMessage) (*TargetConfig, error) {
-	var cfg TargetConfig
-	if err := json.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("invalid target config: %w", err)
-	}
-	if cfg.URL == "" {
-		return nil, fmt.Errorf("target config missing 'url'")
-	}
-	if cfg.NODE == "" {
-		return nil, fmt.Errorf("target config missing 'node'")
-	}
-	return &cfg, nil
-}
-
-func getCredentials() (username, token string, err error) {
-	username = os.Getenv("PROXMOX_USERNAME")
-	token = os.Getenv("PROXMOX_TOKEN")
-	if username == "" {
-		return "", "", fmt.Errorf("PROXMOX_USERNAME not set")
-	}
-	if token == "" {
-		return "", "", fmt.Errorf("PROXMOX_TOKEN not set")
-	}
-	return username, token, nil
-}
-
-func parseLXCProperties(data json.RawMessage) (*LXCProperties, error) {
-	var props LXCProperties
-	if err := json.Unmarshal(data, &props); err != nil {
-		return nil, fmt.Errorf("invalid file properties: %w", err)
-	}
-	if props.VMID == 0 {
-		return nil, fmt.Errorf("vmid missing")
-	}
-	if props.NAME == "" {
-		return nil, fmt.Errorf("name missing")
-	}
-	if props.OSTEMPLATE == "" {
-		return nil, fmt.Errorf("ostemplate missing")
-	}
-	return &props, nil
-}
 
 // ErrNotImplemented is returned by stub methods that need implementation.
 var ErrNotImplemented = errors.New("not implemented")
@@ -138,8 +81,6 @@ func (p *Plugin) LabelConfig() plugin.LabelConfig {
 // Create provisions a new resource.
 func (p *Plugin) Create(ctx context.Context, req *resource.CreateRequest) (*resource.CreateResult, error) {
 
-	log.Println(req.Properties)
-
 	props, err := parseLXCProperties(req.Properties)
 	if err != nil {
 		log.Println(err.Error())
@@ -150,13 +91,12 @@ func (p *Plugin) Create(ctx context.Context, req *resource.CreateRequest) (*reso
 				ErrorCode:       resource.OperationErrorCodeInvalidRequest,
 				StatusMessage:   err.Error(),
 			},
-		}, nil
+		}, err
 	}
-
-	log.Println("LXC Properties: ", props.VMID, props.NAME, props.OSTEMPLATE, props.DESCRIPTION)
 
 	config, err := parseTargetConfig(req.TargetConfig)
 	if err != nil {
+		log.Println(err.Error())
 		return &resource.CreateResult{
 			ProgressResult: &resource.ProgressResult{
 				Operation:       resource.OperationCreate,
@@ -164,11 +104,12 @@ func (p *Plugin) Create(ctx context.Context, req *resource.CreateRequest) (*reso
 				ErrorCode:       resource.OperationErrorCodeInternalFailure,
 				StatusMessage:   err.Error(),
 			},
-		}, nil
+		}, err
 	}
 
 	username, token, err := getCredentials()
 	if err != nil {
+		log.Println(err.Error())
 		return &resource.CreateResult{
 			ProgressResult: &resource.ProgressResult{
 				Operation:       resource.OperationCreate,
@@ -176,15 +117,12 @@ func (p *Plugin) Create(ctx context.Context, req *resource.CreateRequest) (*reso
 				ErrorCode:       resource.OperationErrorCodeInternalFailure,
 				StatusMessage:   err.Error(),
 			},
-		}, nil
+		}, err
 	}
 
 	client := &http.Client{}
 
-	// data := map[string]any{"node": config.NODE, "ostemplate": props.OSTEMPLATE, "id": props.VMID, "hostname": props.NAME, "description": props.DESCRIPTION}
-	// jsonBody, err := json.Marshal(data)
-
-	arguments := "vmid=" + strconv.Itoa(props.VMID) + "&ostemplate=" + props.OSTEMPLATE + "&hostname=" + props.NAME
+	arguments := "vmid=" + props.VMID + "&ostemplate=" + props.OSTemplate + "&hostname=" + props.Hostname
 
 	request, err := http.NewRequest("POST", config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", bytes.NewBuffer([]byte(arguments)))
 	request.Header.Set("Authorization", "PVEAPIToken="+username+"="+token)
@@ -199,10 +137,20 @@ func (p *Plugin) Create(ctx context.Context, req *resource.CreateRequest) (*reso
 				ErrorCode:       resource.OperationErrorCodeInternalFailure,
 				StatusMessage:   err.Error(),
 			},
-		}, nil
+		}, err
 	}
 
 	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return &resource.CreateResult{
+			ProgressResult: &resource.ProgressResult{
+				Operation:       resource.OperationCreate,
+				OperationStatus: resource.OperationStatusFailure,
+				ErrorCode:       resource.OperationErrorCodeInternalFailure,
+				StatusMessage:   err.Error(),
+			},
+		}, err
+	}
 
 	log.Println("Response StatusCode: ", resp.Status)
 	log.Println("Response Body: ", string(body))
@@ -211,24 +159,66 @@ func (p *Plugin) Create(ctx context.Context, req *resource.CreateRequest) (*reso
 		ProgressResult: &resource.ProgressResult{
 			Operation:       resource.OperationCreate,
 			OperationStatus: resource.OperationStatusSuccess,
-			NativeID:        strconv.Itoa(props.VMID),
+			NativeID:        props.VMID,
 		},
 	}, nil
 }
 
-// Read retrieves the current state of a resource.
 func (p *Plugin) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResult, error) {
-	// TODO: Implement resource read
-	//
-	// 1. Use req.NativeID to identify the resource
-	// 2. Parse req.TargetConfig for provider credentials
-	// 3. Call your provider's API to get current state
-	// 4. Return ReadResult with Properties as JSON string
+	username, token, err := getCredentials()
+	if err != nil {
+		return &resource.ReadResult{
+			ErrorCode: resource.OperationErrorCodeInvalidRequest,
+		}, err
+	}
+
+	config, err := parseTargetConfig(req.TargetConfig)
+	if err != nil {
+		return &resource.ReadResult{}, nil
+	}
+
+	client := &http.Client{}
+
+	request, err := http.NewRequest("GET", config.URL+"/api2/json/nodes/"+config.NODE+"/lxc/"+req.NativeID+"/config", nil)
+	if err != nil {
+		return &resource.ReadResult{
+			ErrorCode: resource.OperationErrorCodeNetworkFailure,
+		}, err
+	}
+	request.Header.Set("Authorization", "PVEAPIToken="+username+"="+token)
+
+	resp, err := client.Do(request)
+
+	data, err := io.ReadAll(resp.Body)
+
+	var props StatusLXCConfigResponse
+
+	err = json.Unmarshal(data, &props)
+	if err != nil {
+		return &resource.ReadResult{
+			ErrorCode: resource.OperationErrorCodeInvalidRequest,
+		}, err
+	}
+
+	lxcdata := props.Data
+
+	properties := LXCProperties{
+		VMID:        req.NativeID,
+		Hostname:    lxcdata.Hostname,
+		Description: lxcdata.Description,
+	}
+
+	propsJSON, err := json.Marshal(properties)
+	if err != nil {
+		return &resource.ReadResult{
+			ErrorCode: resource.OperationErrorCodeInternalFailure,
+		}, err
+	}
 
 	return &resource.ReadResult{
 		ResourceType: req.ResourceType,
-		ErrorCode:    resource.OperationErrorCodeInternalFailure,
-	}, ErrNotImplemented
+		Properties:   string(propsJSON),
+	}, nil
 }
 
 // Update modifies an existing resource.

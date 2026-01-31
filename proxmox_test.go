@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -17,31 +17,18 @@ func testTargetConfig() json.RawMessage {
 	return json.RawMessage(`{"url": "https://proxmox.mid:8006", "node": "proxmox"}`)
 }
 
-type LXC struct {
-	VMID int    `json:"vmid"`
-	NAME string `json:"name"`
-}
-
-type RESP_DATA struct {
-	DATA []LXC `json:"data"`
-}
-
 func TestCreate(t *testing.T) {
-	username := os.Getenv("PROXMOX_USERNAME")
-	token := os.Getenv("PROXMOX_TOKEN")
-	if username == "" {
-		t.Skip("PROXMOX_USERNAME not set")
-	}
-	if token == "" {
-		t.Skip("PROXMOX_TOKEN not set")
+	username, token, err := getCredentials()
+	if err != nil {
+		t.Skip(err)
 	}
 
 	plugin := &Plugin{}
 	ctx := context.Background()
 
 	properties := map[string]any{
-		"vmid":        200,
-		"name":        "testlxc",
+		"vmid":        "200",
+		"hostname":    "testlxc",
 		"description": "none",
 		"ostemplate":  "local:vztmpl/alpine-3.22-default_20250617_amd64.tar.xz",
 	}
@@ -67,7 +54,7 @@ func TestCreate(t *testing.T) {
 	require.Eventually(t, func() bool {
 		client := &http.Client{}
 
-		var props RESP_DATA
+		var props StatusGeneralResponse
 
 		request, err := http.NewRequest("GET", config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", nil)
 		if err != nil {
@@ -79,17 +66,44 @@ func TestCreate(t *testing.T) {
 		resp, err := client.Do(request)
 
 		data, err := io.ReadAll(resp.Body)
+
 		json.Unmarshal(data, &props)
 
-		for i := 0; i < len(props.DATA); i++ {
-			lxccontainer := props.DATA[i]
-			t.Logf("Found container: %s", lxccontainer.NAME)
+		for i := 0; i < len(props.Data); i++ {
+			lxccontainer := props.Data[i]
 			if lxccontainer.VMID == 200 {
-				t.Logf("Created Successfully: %s", lxccontainer.NAME)
+				t.Logf("Created Successfully: %s", lxccontainer.Name)
 				return true
 			}
 		}
 
 		return false
 	}, 10*time.Second, time.Second, "Create operation should complete successfully")
+}
+
+func TestRead(t *testing.T) {
+	ctx := context.Background()
+
+	plugin := &Plugin{}
+
+	req := &resource.ReadRequest{
+		NativeID:     strconv.Itoa(120),
+		ResourceType: "PROXMOX::Service::LXC",
+		TargetConfig: testTargetConfig(),
+	}
+
+	result, err := plugin.Read(ctx, req)
+
+	require.NoError(t, err, "Read should not return error")
+	require.Empty(t, result.ErrorCode, "Read should not return error code")
+	require.NotEmpty(t, result.Properties, "Read should return properties")
+
+	var props map[string]any
+
+	err = json.Unmarshal([]byte(result.Properties), &props)
+	require.NoError(t, err, "json should be parsable")
+
+	require.NoError(t, err, "Properties should be valid JSON")
+	require.Equal(t, "ntfy", props["hostname"], "hostname should match")
+	require.Equal(t, strconv.Itoa(120), props["vmid"], "vmid should match")
 }
