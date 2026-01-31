@@ -6,7 +6,7 @@ import "@formae/formae.pkl"
     type = "PROXMOX::Service::LXC"
     identifier = "$.vmid"
 }
-class ExampleResource extends formae.Resource {
+class LXC extends formae.Resource {
     fixed hidden type: String = "PROXMOX::Service::LXC"
 
     @formae.FieldHint { createOnly = true }
@@ -16,7 +16,7 @@ class ExampleResource extends formae.Resource {
     ostemplate: String
 
     @formae.FieldHint {}
-    name: String
+    hostname: String
 
     @formae.FieldHint {}
     description: String = "No description"

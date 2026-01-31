@@ -9,41 +9,29 @@ import "@formae/formae.pkl"
 
 import "@proxmox/proxmox.pkl"
 
-local stackName = "plugin-sdk-test-stack"
-// Read the test run ID from environment variable set by the test harness
-// This ensures consistent naming within a test run but unique names between runs
 local testRunID = read("env:FORMAE_TEST_RUN_ID")
+local stackName = "conformance-test-\(testRunID)"
 
 forma {
   new formae.Stack {
     label = stackName
-    description = "Plugin SDK conformance test stack"
+    description = ""
   }
 
   new formae.Target {
-    label = "example-target"
+    label = "target"
     namespace = "PROXMOX"
-    // TODO: Add your provider-specific configuration
     config = new Mapping {
-      ["region"] = "us-east-1"
+      ["url"] = "https://proxmox.mid:8006"
+      ["node"] = "proxmox"
     }
   }
 
-  new example.ExampleResource {
-    label = "plugin-sdk-test-resource"
-    name = "formae-plugin-sdk-test-\(testRunID)"
-    description = "Test resource for plugin SDK conformance tests"
-    region = "us-east-1"
-
-    endpoint = new example.Endpoint {
-      url = "https://api.example.com"
-      port = 8080
-      protocol = "https"
-    }
-
-    tags = new Listing {
-      new example.Tag { key = "Environment"; value = "test" }
-      new example.Tag { key = "ManagedBy"; value = "formae" }
-    }
+  new proxmox.LXC {
+    label = "test-lxc"
+    vmid = "210"
+    hostname = "test-lxc"
+    description = "no description provided"
+    ostemplate = "local:vztmpl/alpine-3.22-default_20250617_amd64.tar.xz"
   }
 }

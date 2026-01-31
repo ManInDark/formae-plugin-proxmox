@@ -67,7 +67,7 @@ func (p *Plugin) LabelConfig() plugin.LabelConfig {
 	return plugin.LabelConfig{
 		// Default JSONPath query to extract label from resources
 		// Example for tagged resources: $.Tags[?(@.Key=='Name')].Value
-		DefaultQuery: "$.name",
+		DefaultQuery: "$.hostname",
 
 		// Override for specific resource types
 		ResourceOverrides: map[string]string{
@@ -256,7 +256,6 @@ func (p *Plugin) Update(ctx context.Context, req *resource.UpdateRequest) (*reso
 	if prior == nil {
 		p.Create(ctx, &resource.CreateRequest{
 			ResourceType: req.ResourceType,
-			Label:        req.Label,
 			Properties:   req.DesiredProperties,
 			TargetConfig: req.TargetConfig,
 		})

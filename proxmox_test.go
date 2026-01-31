@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -39,7 +41,6 @@ func TestCreate(t *testing.T) {
 
 	req := &resource.CreateRequest{
 		ResourceType: "PROXMOX::Service::LXC",
-		Label:        "test-create",
 		Properties:   propertiesJSON,
 		TargetConfig: testTargetConfig(),
 	}
@@ -162,6 +163,8 @@ func TestList(t *testing.T) {
 		TargetConfig: testTargetConfig(),
 	})
 	require.NoError(t, err, "ListRequest should not return an error")
+
+	log.Printf("Received Ids: %s", strings.Join(result.NativeIDs, ", "))
 
 	require.Contains(t, result.NativeIDs, "200", "List should include created LXC")
 }
