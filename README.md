@@ -1,39 +1,8 @@
-> **⚠️ Do not clone this repository directly!**
->
-> Use `formae plugin init` to create your plugin. This command scaffolds a new
-> plugin from this template with proper naming and configuration.
->
-> ```bash
-> formae plugin init my-plugin
-> ```
+# Formae Plugin Proxmox
 
----
+My attempt at writing a formae plugin to interact with proxmox.
 
-## Setup Checklist
-
-*Remove this section and the warning above after completing setup.*
-
-After creating your plugin with `formae plugin init`, complete these steps:
-
-- [X] Update `formae-plugin.pkl` with your plugin metadata (name, namespace, description)
-- [X] Define your resource types in `schema/pkl/*.pkl`
-- [ ] Implement CRUD operations in `plugin.go`
-- [ ] Update test fixtures in `testdata/*.pkl` to use your resources
-- [ ] Update this README (replace title, description, resources table, etc.)
-- [ ] Set up local credentials for testing
-- [ ] Run conformance tests locally: `make conformance-test`
-- [ ] Configure CI credentials in `.github/workflows/ci.yml` (optional)
-- [ ] Remove this checklist section and the warning box above
-
-For detailed guidance, see the [Plugin SDK Documentation](https://docs.formae.io/plugin-sdk).
-
----
-
-# Example Plugin for formae
-
-*TODO: Update title and description for your plugin*
-
-Example Formae plugin template - replace this with a description of what your plugin manages.
+Very much WIP.
 
 ## Installation
 
@@ -48,7 +17,7 @@ make install
 
 | Resource Type                  | Description                                           |
 | ------------------------------ | ----------------------------------------------------- |
-| `PROXMOX::Service::Resource` | Example resource (replace with your actual resources) |
+| `PROXMOX::Service::LXC`        | LXC Container                                         |
 
 ## Configuration
 
@@ -56,13 +25,13 @@ Configure a target in your Forma file:
 
 ```pkl
 new formae.Target {
-    label = "my-target"
-    namespace = "PROXMOX"  // TODO: Update with your namespace
+    label = "proxmox"
+    namespace = "PROXMOX"
     config = new Mapping {
-        ["region"] = "us-east-1"
-        // TODO: Add your provider-specific configuration
+      ["url"] = "https://your-url:8006"
+      ["node"] = "nodename"
     }
-}
+  }
 ```
 
 ## Examples
@@ -113,9 +82,9 @@ Conformance tests validate your plugin's CRUD lifecycle using the test fixtures 
 
 | File                     | Purpose                          |
 | ------------------------ | -------------------------------- |
-| `resource.pkl`         | Initial resource creation        |
-| `resource-update.pkl`  | In-place update (mutable fields) |
-| `resource-replace.pkl` | Replacement (createOnly fields)  |
+| `resource.pkl`           | Initial resource creation        |
+| `resource-update.pkl`    | In-place update (mutable fields) |
+| `resource-replace.pkl`   | Replacement (createOnly fields)  |
 
 The test harness sets `FORMAE_TEST_RUN_ID` for unique resource naming between runs.
 
