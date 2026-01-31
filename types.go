@@ -28,6 +28,12 @@ type UpdateRequest struct {
 	TargetConfig      json.RawMessage
 }
 
+type DeleteRequest struct {
+	NativeID     string
+	ResourceType string
+	TargetConfig json.RawMessage
+}
+
 type StatusLXCGeneral struct {
 	Status  string `json:"status"`
 	NetIn   int    `json:"netin"`

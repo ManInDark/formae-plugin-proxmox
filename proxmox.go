@@ -340,21 +340,75 @@ func (p *Plugin) Update(ctx context.Context, req *resource.UpdateRequest) (*reso
 
 // Delete removes a resource.
 func (p *Plugin) Delete(ctx context.Context, req *resource.DeleteRequest) (*resource.DeleteResult, error) {
-	// TODO: Implement resource deletion
-	//
-	// 1. Use req.NativeID to identify the resource
-	// 2. Parse req.TargetConfig for provider credentials
-	// 3. Call your provider's API to delete the resource
-	// 4. Return ProgressResult with status
+	config, err := parseTargetConfig(req.TargetConfig)
+	if err != nil {
+		log.Println(err.Error())
+		return &resource.DeleteResult{
+			ProgressResult: &resource.ProgressResult{
+				Operation:       resource.OperationCreate,
+				OperationStatus: resource.OperationStatusFailure,
+				ErrorCode:       resource.OperationErrorCodeInternalFailure,
+				StatusMessage:   err.Error(),
+			},
+		}, err
+	}
+
+	username, token, err := getCredentials()
+	if err != nil {
+		log.Println(err.Error())
+		return &resource.DeleteResult{
+			ProgressResult: &resource.ProgressResult{
+				Operation:       resource.OperationCreate,
+				OperationStatus: resource.OperationStatusFailure,
+				ErrorCode:       resource.OperationErrorCodeInternalFailure,
+				StatusMessage:   err.Error(),
+			},
+		}, err
+	}
+
+	client := &http.Client{}
+
+	url := config.URL + "/api2/json/nodes/" + config.NODE + "/lxc/" + req.NativeID
+
+	request, err := http.NewRequest("DELETE", url, nil)
+	request.Header.Set("Authorization", "PVEAPIToken="+username+"="+token)
+
+	resp, err := client.Do(request)
+
+	if err != nil {
+		return &resource.DeleteResult{
+			ProgressResult: &resource.ProgressResult{
+				Operation:       resource.OperationCreate,
+				OperationStatus: resource.OperationStatusFailure,
+				ErrorCode:       resource.OperationErrorCodeInternalFailure,
+				StatusMessage:   err.Error(),
+			},
+		}, err
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return &resource.DeleteResult{
+			ProgressResult: &resource.ProgressResult{
+				Operation:       resource.OperationCreate,
+				OperationStatus: resource.OperationStatusFailure,
+				ErrorCode:       resource.OperationErrorCodeInternalFailure,
+				StatusMessage:   err.Error(),
+			},
+		}, err
+	}
+
+	log.Println("Response StatusCode: ", resp.Status)
+	log.Println("Response Body: ", string(body))
 
 	return &resource.DeleteResult{
 		ProgressResult: &resource.ProgressResult{
-			Operation:       resource.OperationDelete,
-			OperationStatus: resource.OperationStatusFailure,
-			ErrorCode:       resource.OperationErrorCodeInternalFailure,
-			StatusMessage:   "Delete not implemented",
+			Operation:       resource.OperationCreate,
+			OperationStatus: resource.OperationStatusSuccess,
+			NativeID:        req.NativeID,
 		},
-	}, ErrNotImplemented
+	}, nil
+
 }
 
 // Status checks the progress of an async operation.

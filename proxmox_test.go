@@ -152,3 +152,55 @@ func TestUpdate(t *testing.T) {
 	require.Equal(t, "testlxc-updated", props["hostname"], "hostname should have changed")
 	// test if update has happened
 }
+
+func TestDelete(t *testing.T) {
+	ctx := context.Background()
+	plugin := &Plugin{}
+
+	username, token, err := getCredentials()
+	if err != nil {
+		t.Skip(err)
+	}
+
+	config, err := parseTargetConfig(testTargetConfig())
+	if err != nil {
+		t.Skip(err)
+	}
+
+	result, err := plugin.Delete(ctx, &resource.DeleteRequest{
+		ResourceType: "PROXMOX::Service::LXC",
+		TargetConfig: testTargetConfig(),
+		NativeID:     "200",
+	})
+
+	require.NoError(t, err, "Create should not return error")
+	require.NotNil(t, result.ProgressResult, "Create should return ProgressResult")
+
+	require.Eventually(t, func() bool {
+		client := &http.Client{}
+
+		var props StatusGeneralResponse
+
+		request, err := http.NewRequest("GET", config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", nil)
+		if err != nil {
+			t.Logf("Something unexpected happened")
+			return false
+		}
+		request.Header.Set("Authorization", "PVEAPIToken="+username+"="+token)
+
+		resp, err := client.Do(request)
+
+		data, err := io.ReadAll(resp.Body)
+
+		json.Unmarshal(data, &props)
+
+		for i := 0; i < len(props.Data); i++ {
+			lxccontainer := props.Data[i]
+			if lxccontainer.VMID == 200 {
+				return false
+			}
+		}
+
+		return true
+	}, 10*time.Second, time.Second, "Create operation should complete successfully")
+}
