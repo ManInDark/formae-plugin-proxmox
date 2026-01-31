@@ -107,3 +107,48 @@ func TestRead(t *testing.T) {
 	require.Equal(t, "ntfy", props["hostname"], "hostname should match")
 	require.Equal(t, strconv.Itoa(120), props["vmid"], "vmid should match")
 }
+
+func TestUpdate(t *testing.T) {
+	ctx := context.Background()
+	plugin := &Plugin{}
+
+	priorProperties, _ := json.Marshal(map[string]any{
+		"vmid":        "200",
+		"hostname":    "testlxc",
+		"description": "none",
+		"ostemplate":  "local:vztmpl/alpine-3.22-default_20250617_amd64.tar.xz",
+	})
+
+	desiredProperties, _ := json.Marshal(map[string]any{
+		"vmid":        "200",
+		"hostname":    "testlxc-updated",
+		"description": "none",
+		"ostemplate":  "local:vztmpl/alpine-3.22-default_20250617_amd64.tar.xz",
+	})
+
+	req := &resource.UpdateRequest{
+		NativeID:          "200",
+		ResourceType:      "PROXMOX::Service::LXC",
+		PriorProperties:   priorProperties,
+		DesiredProperties: desiredProperties,
+		TargetConfig:      testTargetConfig(),
+	}
+
+	result, err := plugin.Update(ctx, req)
+	require.NoError(t, err, "Update should not return error")
+	require.NotNil(t, result.ProgressResult, "Update should return ProgressResult")
+	require.Equal(t, resource.OperationStatusSuccess, result.ProgressResult.OperationStatus, "Update should return Success status")
+
+	readReq := &resource.ReadRequest{
+		NativeID:     strconv.Itoa(200),
+		ResourceType: "PROXMOX::Service::LXC",
+		TargetConfig: testTargetConfig(),
+	}
+
+	readResult, err := plugin.Read(ctx, readReq)
+	var props map[string]any
+
+	err = json.Unmarshal([]byte(readResult.Properties), &props)
+	require.Equal(t, "testlxc-updated", props["hostname"], "hostname should have changed")
+	// test if update has happened
+}

@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -123,6 +124,9 @@ func (p *Plugin) Create(ctx context.Context, req *resource.CreateRequest) (*reso
 	client := &http.Client{}
 
 	arguments := "vmid=" + props.VMID + "&ostemplate=" + props.OSTemplate + "&hostname=" + props.Hostname
+	if props.Description != "" {
+		arguments += "&description=" + props.Description
+	}
 
 	request, err := http.NewRequest("POST", config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", bytes.NewBuffer([]byte(arguments)))
 	request.Header.Set("Authorization", "PVEAPIToken="+username+"="+token)
@@ -223,22 +227,115 @@ func (p *Plugin) Read(ctx context.Context, req *resource.ReadRequest) (*resource
 
 // Update modifies an existing resource.
 func (p *Plugin) Update(ctx context.Context, req *resource.UpdateRequest) (*resource.UpdateResult, error) {
-	// TODO: Implement resource update
-	//
-	// 1. Use req.NativeID to identify the resource
-	// 2. Use req.PatchDocument for changes (JSON Patch format)
-	//    Or compare req.PriorProperties with req.DesiredProperties
-	// 3. Call your provider's API to apply changes
-	// 4. Return ProgressResult with status
+
+	prior, err := parseLXCProperties(req.PriorProperties)
+	if err != nil {
+		return &resource.UpdateResult{
+			ProgressResult: &resource.ProgressResult{
+				Operation:       resource.OperationUpdate,
+				OperationStatus: resource.OperationStatusFailure,
+				ErrorCode:       resource.OperationErrorCodeInvalidRequest,
+				StatusMessage:   err.Error(),
+			},
+		}, err
+	}
+
+	desir, err := parseLXCProperties(req.DesiredProperties)
+	if err != nil {
+		return &resource.UpdateResult{
+			ProgressResult: &resource.ProgressResult{
+				Operation:       resource.OperationUpdate,
+				OperationStatus: resource.OperationStatusFailure,
+				ErrorCode:       resource.OperationErrorCodeInvalidRequest,
+				StatusMessage:   err.Error(),
+			},
+		}, err
+	}
+
+	if prior == nil {
+		p.Create(ctx, &resource.CreateRequest{
+			ResourceType: req.ResourceType,
+			Label:        req.Label,
+			Properties:   req.DesiredProperties,
+			TargetConfig: req.TargetConfig,
+		})
+	}
+
+	if prior.VMID != desir.VMID {
+		return &resource.UpdateResult{
+			ProgressResult: &resource.ProgressResult{
+				Operation:       resource.OperationUpdate,
+				OperationStatus: resource.OperationStatusFailure,
+				ErrorCode:       resource.OperationErrorCodeInvalidRequest,
+				StatusMessage:   "can't change vmid",
+			},
+		}, fmt.Errorf("can't change vmid")
+	}
+
+	if prior.Hostname != desir.Hostname || prior.Description != desir.Description {
+		config, err := parseTargetConfig(req.TargetConfig)
+		if err != nil {
+			log.Println(err.Error())
+			return &resource.UpdateResult{
+				ProgressResult: &resource.ProgressResult{
+					Operation:       resource.OperationCreate,
+					OperationStatus: resource.OperationStatusFailure,
+					ErrorCode:       resource.OperationErrorCodeInternalFailure,
+					StatusMessage:   err.Error(),
+				},
+			}, err
+		}
+
+		username, token, err := getCredentials()
+		if err != nil {
+			return &resource.UpdateResult{
+				ProgressResult: &resource.ProgressResult{
+					Operation:       resource.OperationUpdate,
+					OperationStatus: resource.OperationStatusFailure,
+					ErrorCode:       resource.OperationErrorCodeAccessDenied,
+					StatusMessage:   err.Error(),
+				},
+			}, err
+		}
+
+		client := &http.Client{}
+
+		url := config.URL + "/api2/json/nodes/" + config.NODE + "/lxc/" + desir.VMID + "/config"
+		arguments := "vmid=" + desir.VMID + "&hostname=" + desir.Hostname + "&description=" + desir.Description
+
+		argumentBuffer := bytes.NewBuffer([]byte(arguments))
+		request, err := http.NewRequest("PUT", url, argumentBuffer)
+		request.Header.Set("Authorization", "PVEAPIToken="+username+"="+token)
+
+		resp, err := client.Do(request)
+		if err != nil {
+			return &resource.UpdateResult{
+				ProgressResult: &resource.ProgressResult{
+					Operation:       resource.OperationCreate,
+					OperationStatus: resource.OperationStatusFailure,
+					ErrorCode:       resource.OperationErrorCodeInternalFailure,
+					StatusMessage:   err.Error(),
+				},
+			}, err
+		}
+
+		log.Println("Response StatusCode: ", resp.Status)
+	}
+
+	result, err := p.Read(ctx, &resource.ReadRequest{
+		NativeID:     req.NativeID,
+		ResourceType: req.ResourceType,
+		TargetConfig: req.TargetConfig,
+	})
 
 	return &resource.UpdateResult{
 		ProgressResult: &resource.ProgressResult{
-			Operation:       resource.OperationUpdate,
-			OperationStatus: resource.OperationStatusFailure,
-			ErrorCode:       resource.OperationErrorCodeInternalFailure,
-			StatusMessage:   "Update not implemented",
+			Operation:          resource.OperationUpdate,
+			OperationStatus:    resource.OperationStatusSuccess,
+			NativeID:           req.NativeID,
+			ResourceProperties: json.RawMessage(result.Properties),
 		},
-	}, ErrNotImplemented
+	}, nil
 }
 
 // Delete removes a resource.

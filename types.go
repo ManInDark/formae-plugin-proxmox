@@ -20,6 +20,14 @@ type ReadRequest struct {
 	TargetConfig json.RawMessage
 }
 
+type UpdateRequest struct {
+	NativeID          string
+	ResourceType      string
+	PriorProperties   json.RawMessage
+	DesiredProperties json.RawMessage
+	TargetConfig      json.RawMessage
+}
+
 type StatusLXCGeneral struct {
 	Status  string `json:"status"`
 	NetIn   int    `json:"netin"`
