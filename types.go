@@ -11,7 +11,7 @@ type LXCProperties struct {
 	VMID        string `json:"vmid"`
 	Hostname    string `json:"hostname"`
 	Description string `json:"description,omitempty"`
-	OSTemplate  string `json:"ostemplate"`
+	OSTemplate  string `json:"ostemplate,omitempty"`
 }
 
 type ReadRequest struct {

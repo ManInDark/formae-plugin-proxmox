@@ -29,12 +29,12 @@ class LXC extends formae.Resource {
         createOnly = true
         writeOnly = true
     }
-    ostemplate: String
+    ostemplate: String?
 
     @formae.FieldHint {}
     hostname: String
 
     @formae.FieldHint {}
-    description: String = "No description"
+    description: String?
 
 }

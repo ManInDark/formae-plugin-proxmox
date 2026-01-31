@@ -43,8 +43,5 @@ func parseLXCProperties(data json.RawMessage) (*LXCProperties, error) {
 	if props.Hostname == "" {
 		return nil, fmt.Errorf("name missing")
 	}
-	if props.OSTemplate == "" {
-		return nil, fmt.Errorf("ostemplate missing")
-	}
 	return &props, nil
 }
