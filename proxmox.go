@@ -211,7 +211,6 @@ func (p *Plugin) Read(ctx context.Context, req *resource.ReadRequest) (*resource
 		VMID:        req.NativeID,
 		Hostname:    lxcdata.Hostname,
 		Description: lxcdata.Description,
-		OSTemplate:  "",
 	}
 
 	propsJSON, err := json.Marshal(properties)
