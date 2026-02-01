@@ -25,9 +25,7 @@ class LXC extends formae.Resource {
     @formae.FieldHint { createOnly = true }
     vmid: String
 
-    @formae.FieldHint {
-        writeOnly = true
-    }
+    @formae.FieldHint {}
     ostemplate: String?
 
     @formae.FieldHint {}
