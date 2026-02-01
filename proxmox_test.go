@@ -33,6 +33,7 @@ func TestCreate(t *testing.T) {
 		"hostname":    "testlxc",
 		"description": "none",
 		"ostemplate":  "local:vztmpl/alpine-3.22-default_20250617_amd64.tar.xz",
+		"cores":       1,
 	}
 
 	propertiesJSON, err := json.Marshal(properties)
@@ -107,6 +108,8 @@ func TestRead(t *testing.T) {
 	require.NoError(t, err, "Properties should be valid JSON")
 	require.Equal(t, "ntfy", props["hostname"], "hostname should match")
 	require.Equal(t, strconv.Itoa(120), props["vmid"], "vmid should match")
+	const core_num float64 = 1
+	require.Equal(t, core_num, props["cores"], "cores should match")
 }
 
 func TestUpdate(t *testing.T) {
@@ -118,6 +121,7 @@ func TestUpdate(t *testing.T) {
 		"hostname":    "testlxc",
 		"description": "none",
 		"ostemplate":  "local:vztmpl/alpine-3.22-default_20250617_amd64.tar.xz",
+		"cores":       1,
 	})
 
 	desiredProperties, _ := json.Marshal(map[string]any{
@@ -125,6 +129,7 @@ func TestUpdate(t *testing.T) {
 		"hostname":    "testlxc-updated",
 		"description": "none",
 		"ostemplate":  "local:vztmpl/alpine-3.22-default_20250617_amd64.tar.xz",
+		"cores":       2,
 	})
 
 	req := &resource.UpdateRequest{
@@ -151,7 +156,8 @@ func TestUpdate(t *testing.T) {
 
 	err = json.Unmarshal([]byte(readResult.Properties), &props)
 	require.Equal(t, "testlxc-updated", props["hostname"], "hostname should have changed")
-	// test if update has happened
+	const core_num float64 = 2
+	require.Equal(t, core_num, props["cores"], "cores should have changed")
 }
 
 func TestList(t *testing.T) {

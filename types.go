@@ -12,6 +12,7 @@ type LXCProperties struct {
 	Hostname    string `json:"hostname"`
 	Description string `json:"description,omitempty"`
 	OSTemplate  string `json:"ostemplate,omitempty"`
+	Cores       int    `json:"cores"`
 }
 
 type ReadRequest struct {
@@ -61,6 +62,7 @@ type StatusGeneralResponse struct {
 
 type StatusLXCConfig struct {
 	Arch        string `json:"arch"`
+	Cores       int    `json:"cores"`
 	OSType      string `json:"ostype"`
 	RootFS      string `json:"rootfs"`
 	Hostname    string `json:"hostname"`
