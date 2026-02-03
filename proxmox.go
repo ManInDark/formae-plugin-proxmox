@@ -252,52 +252,50 @@ func (p *Plugin) Update(ctx context.Context, req *resource.UpdateRequest) (*reso
 		}, fmt.Errorf("can't change vmid")
 	}
 
-	if prior.Hostname != desir.Hostname || prior.Description != desir.Description {
-		config, err := parseTargetConfig(req.TargetConfig)
-		if err != nil {
-			log.Println(err.Error())
-			return &resource.UpdateResult{
-				ProgressResult: &resource.ProgressResult{
-					Operation:       resource.OperationCreate,
-					OperationStatus: resource.OperationStatusFailure,
-					ErrorCode:       resource.OperationErrorCodeInternalFailure,
-					StatusMessage:   err.Error(),
-				},
-			}, err
-		}
+	config, err := parseTargetConfig(req.TargetConfig)
+	if err != nil {
+		log.Println(err.Error())
+		return &resource.UpdateResult{
+			ProgressResult: &resource.ProgressResult{
+				Operation:       resource.OperationCreate,
+				OperationStatus: resource.OperationStatusFailure,
+				ErrorCode:       resource.OperationErrorCodeInternalFailure,
+				StatusMessage:   err.Error(),
+			},
+		}, err
+	}
 
-		username, token, err := getCredentials()
-		if err != nil {
-			return &resource.UpdateResult{
-				ProgressResult: &resource.ProgressResult{
-					Operation:       resource.OperationUpdate,
-					OperationStatus: resource.OperationStatusFailure,
-					ErrorCode:       resource.OperationErrorCodeAccessDenied,
-					StatusMessage:   err.Error(),
-				},
-			}, err
-		}
+	username, token, err := getCredentials()
+	if err != nil {
+		return &resource.UpdateResult{
+			ProgressResult: &resource.ProgressResult{
+				Operation:       resource.OperationUpdate,
+				OperationStatus: resource.OperationStatusFailure,
+				ErrorCode:       resource.OperationErrorCodeAccessDenied,
+				StatusMessage:   err.Error(),
+			},
+		}, err
+	}
 
-		urlparams := url.Values{
-			"vmid":        {desir.VMID},
-			"hostname":    {desir.Hostname},
-			"cores":       {strconv.Itoa(desir.Cores)},
-			"memory":      {strconv.Itoa(desir.Memory)},
-			"description": {desir.Description},
-		}
+	urlparams := url.Values{
+		"vmid":        {desir.VMID},
+		"hostname":    {desir.Hostname},
+		"cores":       {strconv.Itoa(desir.Cores)},
+		"memory":      {strconv.Itoa(desir.Memory)},
+		"description": {desir.Description},
+	}
 
-		_, err = authenticatedRequest(http.MethodPut, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc/"+desir.VMID+"/config", createAuthorizationString(username, token), urlparams)
+	_, err = authenticatedRequest("PUT", config.URL+"/api2/json/nodes/"+config.NODE+"/lxc/"+desir.VMID+"/config", createAuthorizationString(username, token), urlparams)
 
-		if err != nil {
-			return &resource.UpdateResult{
-				ProgressResult: &resource.ProgressResult{
-					Operation:       resource.OperationCreate,
-					OperationStatus: resource.OperationStatusFailure,
-					ErrorCode:       resource.OperationErrorCodeInternalFailure,
-					StatusMessage:   err.Error(),
-				},
-			}, err
-		}
+	if err != nil {
+		return &resource.UpdateResult{
+			ProgressResult: &resource.ProgressResult{
+				Operation:       resource.OperationCreate,
+				OperationStatus: resource.OperationStatusFailure,
+				ErrorCode:       resource.OperationErrorCodeInternalFailure,
+				StatusMessage:   err.Error(),
+			},
+		}, err
 	}
 
 	result, err := p.Read(ctx, &resource.ReadRequest{

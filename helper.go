@@ -64,17 +64,20 @@ func authenticatedRequest(method, url, authorization string, urlparams url.Value
 
 	request, err := http.NewRequest(method, url, body)
 	if err != nil {
+		log.Println("Error: ", err)
 		return nil, err
 	}
 	request.Header.Set("Authorization", authorization)
 
 	resp, err := client.Do(request)
 	if err != nil {
+		log.Println("Error: ", err)
 		return nil, err
 	}
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
+		log.Println("Error: ", err)
 		return nil, err
 	}
 
