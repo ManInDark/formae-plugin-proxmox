@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 )
 
@@ -53,8 +55,12 @@ func createAuthorizationString(username, token string) string {
 	return "PVEAPIToken=" + username + "=" + token
 }
 
-func authenticatedRequest(method, url, authorization string, body io.Reader) ([]byte, error) {
+func authenticatedRequest(method, url, authorization string, urlparams url.Values) ([]byte, error) {
 	client := &http.Client{}
+	body := &bytes.Buffer{}
+	if urlparams != nil {
+		body = bytes.NewBuffer([]byte(urlparams.Encode()))
+	}
 
 	request, err := http.NewRequest(method, url, body)
 	if err != nil {

@@ -5,13 +5,13 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/platform-engineering-labs/formae/pkg/plugin"
@@ -121,12 +121,18 @@ func (p *Plugin) Create(ctx context.Context, req *resource.CreateRequest) (*reso
 		}, err
 	}
 
-	arguments := "vmid=" + props.VMID + "&ostemplate=" + props.OSTemplate + "&hostname=" + props.Hostname + "&cores=" + strconv.Itoa(props.Cores) + "&memory=" + strconv.Itoa(props.Memory)
+	urlparams := url.Values{
+		"vmid":       {props.VMID},
+		"ostemplate": {props.OSTemplate},
+		"hostname":   {props.Hostname},
+		"cores":      {strconv.Itoa(props.Cores)},
+		"memory":     {strconv.Itoa(props.Memory)},
+	}
 	if props.Description != "" {
-		arguments += "&description=" + props.Description
+		urlparams.Add("description", props.Description)
 	}
 
-	_, err = authenticatedRequest(http.MethodPost, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", createAuthorizationString(username, token), bytes.NewBuffer([]byte(arguments)))
+	_, err = authenticatedRequest(http.MethodPost, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", createAuthorizationString(username, token), urlparams)
 
 	if err != nil {
 		return &resource.CreateResult{
@@ -272,10 +278,15 @@ func (p *Plugin) Update(ctx context.Context, req *resource.UpdateRequest) (*reso
 			}, err
 		}
 
-		arguments := "vmid=" + desir.VMID + "&hostname=" + desir.Hostname + "&description=" + desir.Description + "&cores=" + strconv.Itoa(desir.Cores) + "&memory=" + strconv.Itoa(desir.Memory)
+		urlparams := url.Values{
+			"vmid":        {desir.VMID},
+			"hostname":    {desir.Hostname},
+			"cores":       {strconv.Itoa(desir.Cores)},
+			"memory":      {strconv.Itoa(desir.Memory)},
+			"description": {desir.Description},
+		}
 
-		argumentBuffer := bytes.NewBuffer([]byte(arguments))
-		_, err = authenticatedRequest(http.MethodPut, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc/"+desir.VMID+"/config", createAuthorizationString(username, token), argumentBuffer)
+		_, err = authenticatedRequest(http.MethodPut, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc/"+desir.VMID+"/config", createAuthorizationString(username, token), urlparams)
 
 		if err != nil {
 			return &resource.UpdateResult{
