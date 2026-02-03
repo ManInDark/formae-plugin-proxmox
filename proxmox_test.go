@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -55,20 +54,9 @@ func TestCreate(t *testing.T) {
 	require.NotNil(t, result.ProgressResult, "Create should return ProgressResult")
 
 	require.Eventually(t, func() bool {
-		client := &http.Client{}
-
 		var props StatusGeneralResponse
 
-		request, err := http.NewRequest("GET", config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", nil)
-		if err != nil {
-			t.Logf("Something unexpected happened")
-			return false
-		}
-		request.Header.Set("Authorization", "PVEAPIToken="+username+"="+token)
-
-		resp, err := client.Do(request)
-
-		data, err := io.ReadAll(resp.Body)
+		data, _ := authenticatedRequest(http.MethodGet, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", createAuthorizationString(username, token), nil)
 
 		json.Unmarshal(data, &props)
 
@@ -206,20 +194,9 @@ func TestDelete(t *testing.T) {
 	require.NotNil(t, result.ProgressResult, "Create should return ProgressResult")
 
 	require.Eventually(t, func() bool {
-		client := &http.Client{}
-
 		var props StatusGeneralResponse
 
-		request, err := http.NewRequest("GET", config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", nil)
-		if err != nil {
-			t.Logf("Something unexpected happened")
-			return false
-		}
-		request.Header.Set("Authorization", "PVEAPIToken="+username+"="+token)
-
-		resp, err := client.Do(request)
-
-		data, err := io.ReadAll(resp.Body)
+		data, _ := authenticatedRequest(http.MethodGet, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", createAuthorizationString(username, token), nil)
 
 		json.Unmarshal(data, &props)
 

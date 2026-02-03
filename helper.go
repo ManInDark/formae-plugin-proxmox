@@ -3,6 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
 	"os"
 )
 
@@ -44,4 +47,32 @@ func parseLXCProperties(data json.RawMessage) (*LXCProperties, error) {
 		return nil, fmt.Errorf("name missing")
 	}
 	return &props, nil
+}
+
+func createAuthorizationString(username, token string) string {
+	return "PVEAPIToken=" + username + "=" + token
+}
+
+func authenticatedRequest(method, url, authorization string, body io.Reader) ([]byte, error) {
+	client := &http.Client{}
+
+	request, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, err
+	}
+	request.Header.Set("Authorization", authorization)
+
+	resp, err := client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Println("URL: ", method, "Status Code:", resp.Status, "Body: ", string(data))
+
+	return data, nil
 }

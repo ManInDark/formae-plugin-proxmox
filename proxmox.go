@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -122,17 +121,12 @@ func (p *Plugin) Create(ctx context.Context, req *resource.CreateRequest) (*reso
 		}, err
 	}
 
-	client := &http.Client{}
-
 	arguments := "vmid=" + props.VMID + "&ostemplate=" + props.OSTemplate + "&hostname=" + props.Hostname + "&cores=" + strconv.Itoa(props.Cores) + "&memory=" + strconv.Itoa(props.Memory)
 	if props.Description != "" {
 		arguments += "&description=" + props.Description
 	}
 
-	request, err := http.NewRequest("POST", config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", bytes.NewBuffer([]byte(arguments)))
-	request.Header.Set("Authorization", "PVEAPIToken="+username+"="+token)
-
-	resp, err := client.Do(request)
+	_, err = authenticatedRequest(http.MethodPost, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", createAuthorizationString(username, token), bytes.NewBuffer([]byte(arguments)))
 
 	if err != nil {
 		return &resource.CreateResult{
@@ -144,21 +138,6 @@ func (p *Plugin) Create(ctx context.Context, req *resource.CreateRequest) (*reso
 			},
 		}, err
 	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return &resource.CreateResult{
-			ProgressResult: &resource.ProgressResult{
-				Operation:       resource.OperationCreate,
-				OperationStatus: resource.OperationStatusFailure,
-				ErrorCode:       resource.OperationErrorCodeInternalFailure,
-				StatusMessage:   err.Error(),
-			},
-		}, err
-	}
-
-	log.Println("Response StatusCode: ", resp.Status)
-	log.Println("Response Body: ", string(body))
 
 	return &resource.CreateResult{
 		ProgressResult: &resource.ProgressResult{
@@ -182,19 +161,12 @@ func (p *Plugin) Read(ctx context.Context, req *resource.ReadRequest) (*resource
 		return &resource.ReadResult{}, nil
 	}
 
-	client := &http.Client{}
-
-	request, err := http.NewRequest("GET", config.URL+"/api2/json/nodes/"+config.NODE+"/lxc/"+req.NativeID+"/config", nil)
+	data, err := authenticatedRequest(http.MethodGet, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc/"+req.NativeID+"/config", createAuthorizationString(username, token), nil)
 	if err != nil {
 		return &resource.ReadResult{
 			ErrorCode: resource.OperationErrorCodeNetworkFailure,
 		}, err
 	}
-	request.Header.Set("Authorization", "PVEAPIToken="+username+"="+token)
-
-	resp, err := client.Do(request)
-
-	data, err := io.ReadAll(resp.Body)
 
 	var props StatusLXCConfigResponse
 
@@ -300,16 +272,11 @@ func (p *Plugin) Update(ctx context.Context, req *resource.UpdateRequest) (*reso
 			}, err
 		}
 
-		client := &http.Client{}
-
-		url := config.URL + "/api2/json/nodes/" + config.NODE + "/lxc/" + desir.VMID + "/config"
 		arguments := "vmid=" + desir.VMID + "&hostname=" + desir.Hostname + "&description=" + desir.Description + "&cores=" + strconv.Itoa(desir.Cores) + "&memory=" + strconv.Itoa(desir.Memory)
 
 		argumentBuffer := bytes.NewBuffer([]byte(arguments))
-		request, err := http.NewRequest("PUT", url, argumentBuffer)
-		request.Header.Set("Authorization", "PVEAPIToken="+username+"="+token)
+		_, err = authenticatedRequest(http.MethodPut, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc/"+desir.VMID+"/config", createAuthorizationString(username, token), argumentBuffer)
 
-		resp, err := client.Do(request)
 		if err != nil {
 			return &resource.UpdateResult{
 				ProgressResult: &resource.ProgressResult{
@@ -320,8 +287,6 @@ func (p *Plugin) Update(ctx context.Context, req *resource.UpdateRequest) (*reso
 				},
 			}, err
 		}
-
-		log.Println("Response StatusCode: ", resp.Status)
 	}
 
 	result, err := p.Read(ctx, &resource.ReadRequest{
@@ -368,14 +333,7 @@ func (p *Plugin) Delete(ctx context.Context, req *resource.DeleteRequest) (*reso
 		}, err
 	}
 
-	client := &http.Client{}
-
-	url := config.URL + "/api2/json/nodes/" + config.NODE + "/lxc/" + req.NativeID
-
-	request, err := http.NewRequest("DELETE", url, nil)
-	request.Header.Set("Authorization", "PVEAPIToken="+username+"="+token)
-
-	resp, err := client.Do(request)
+	_, err = authenticatedRequest(http.MethodDelete, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc/"+req.NativeID, createAuthorizationString(username, token), nil)
 
 	if err != nil {
 		return &resource.DeleteResult{
@@ -387,21 +345,6 @@ func (p *Plugin) Delete(ctx context.Context, req *resource.DeleteRequest) (*reso
 			},
 		}, err
 	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return &resource.DeleteResult{
-			ProgressResult: &resource.ProgressResult{
-				Operation:       resource.OperationCreate,
-				OperationStatus: resource.OperationStatusFailure,
-				ErrorCode:       resource.OperationErrorCodeInternalFailure,
-				StatusMessage:   err.Error(),
-			},
-		}, err
-	}
-
-	log.Println("Response StatusCode: ", resp.Status)
-	log.Println("Response Body: ", string(body))
 
 	return &resource.DeleteResult{
 		ProgressResult: &resource.ProgressResult{
@@ -452,21 +395,14 @@ func (p *Plugin) List(ctx context.Context, req *resource.ListRequest) (*resource
 		}, err
 	}
 
-	client := &http.Client{}
-
 	var props StatusGeneralResponse
 
-	request, err := http.NewRequest("GET", config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", nil)
+	data, err := authenticatedRequest(http.MethodGet, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", createAuthorizationString(username, token), nil)
 	if err != nil {
 		return &resource.ListResult{
 			NativeIDs: []string{},
 		}, err
 	}
-	request.Header.Set("Authorization", "PVEAPIToken="+username+"="+token)
-
-	resp, err := client.Do(request)
-
-	data, err := io.ReadAll(resp.Body)
 
 	json.Unmarshal(data, &props)
 
