@@ -13,6 +13,7 @@ type LXCProperties struct {
 	Description string `json:"description,omitempty"`
 	OSTemplate  string `json:"ostemplate,omitempty"`
 	Cores       int    `json:"cores"`
+	Memory      int    `json:"memory"`
 }
 
 type ReadRequest struct {

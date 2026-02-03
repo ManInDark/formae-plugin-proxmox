@@ -124,7 +124,7 @@ func (p *Plugin) Create(ctx context.Context, req *resource.CreateRequest) (*reso
 
 	client := &http.Client{}
 
-	arguments := "vmid=" + props.VMID + "&ostemplate=" + props.OSTemplate + "&hostname=" + props.Hostname + "&cores=" + strconv.Itoa(props.Cores)
+	arguments := "vmid=" + props.VMID + "&ostemplate=" + props.OSTemplate + "&hostname=" + props.Hostname + "&cores=" + strconv.Itoa(props.Cores) + "&memory=" + strconv.Itoa(props.Memory)
 	if props.Description != "" {
 		arguments += "&description=" + props.Description
 	}
@@ -212,6 +212,7 @@ func (p *Plugin) Read(ctx context.Context, req *resource.ReadRequest) (*resource
 		Hostname:    lxcdata.Hostname,
 		Description: lxcdata.Description,
 		Cores:       lxcdata.Cores,
+		Memory:      lxcdata.Memory,
 	}
 
 	propsJSON, err := json.Marshal(properties)
@@ -302,7 +303,7 @@ func (p *Plugin) Update(ctx context.Context, req *resource.UpdateRequest) (*reso
 		client := &http.Client{}
 
 		url := config.URL + "/api2/json/nodes/" + config.NODE + "/lxc/" + desir.VMID + "/config"
-		arguments := "vmid=" + desir.VMID + "&hostname=" + desir.Hostname + "&description=" + desir.Description + "&cores=" + strconv.Itoa(desir.Cores)
+		arguments := "vmid=" + desir.VMID + "&hostname=" + desir.Hostname + "&description=" + desir.Description + "&cores=" + strconv.Itoa(desir.Cores) + "&memory=" + strconv.Itoa(desir.Memory)
 
 		argumentBuffer := bytes.NewBuffer([]byte(arguments))
 		request, err := http.NewRequest("PUT", url, argumentBuffer)

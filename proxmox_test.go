@@ -34,6 +34,7 @@ func TestCreate(t *testing.T) {
 		"description": "none",
 		"ostemplate":  "local:vztmpl/alpine-3.22-default_20250617_amd64.tar.xz",
 		"cores":       1,
+		"memory":      512,
 	}
 
 	propertiesJSON, err := json.Marshal(properties)
@@ -110,6 +111,8 @@ func TestRead(t *testing.T) {
 	require.Equal(t, strconv.Itoa(120), props["vmid"], "vmid should match")
 	const core_num float64 = 1
 	require.Equal(t, core_num, props["cores"], "cores should match")
+	const mem_num float64 = 192
+	require.Equal(t, mem_num, props["memory"], "memory should match")
 }
 
 func TestUpdate(t *testing.T) {
@@ -122,6 +125,7 @@ func TestUpdate(t *testing.T) {
 		"description": "none",
 		"ostemplate":  "local:vztmpl/alpine-3.22-default_20250617_amd64.tar.xz",
 		"cores":       1,
+		"memory":      512,
 	})
 
 	desiredProperties, _ := json.Marshal(map[string]any{
@@ -130,6 +134,7 @@ func TestUpdate(t *testing.T) {
 		"description": "none",
 		"ostemplate":  "local:vztmpl/alpine-3.22-default_20250617_amd64.tar.xz",
 		"cores":       2,
+		"memory":      1024,
 	})
 
 	req := &resource.UpdateRequest{
@@ -158,6 +163,8 @@ func TestUpdate(t *testing.T) {
 	require.Equal(t, "testlxc-updated", props["hostname"], "hostname should have changed")
 	const core_num float64 = 2
 	require.Equal(t, core_num, props["cores"], "cores should have changed")
+	const mem_num float64 = 1024
+	require.Equal(t, mem_num, props["memory"], "memory should have changed")
 }
 
 func TestList(t *testing.T) {

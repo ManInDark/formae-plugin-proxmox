@@ -37,4 +37,7 @@ class LXC extends formae.Resource {
     @formae.FieldHint {}
     cores: Int
 
+    @formae.FieldHint {}
+    memory: Int
+
 }
