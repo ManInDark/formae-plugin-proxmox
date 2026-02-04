@@ -40,4 +40,7 @@ class LXC extends formae.Resource {
     @formae.FieldHint {}
     memory: Int
 
+    @formae.FieldHint {}
+    onboot: Int = 0
+
 }

@@ -131,6 +131,9 @@ func (p *Plugin) Create(ctx context.Context, req *resource.CreateRequest) (*reso
 	if props.Description != "" {
 		urlparams.Add("description", props.Description)
 	}
+	if props.OnBoot != 0 {
+		urlparams.Add("onboot", strconv.Itoa(props.OnBoot))
+	}
 
 	_, err = authenticatedRequest(http.MethodPost, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", createAuthorizationString(username, token), urlparams)
 
@@ -178,6 +181,7 @@ func (p *Plugin) Read(ctx context.Context, req *resource.ReadRequest) (*resource
 
 	err = json.Unmarshal(data, &props)
 	if err != nil {
+		log.Println("Error unmarshaling json: ", data)
 		return &resource.ReadResult{
 			ErrorCode: resource.OperationErrorCodeInvalidRequest,
 		}, err
@@ -191,6 +195,7 @@ func (p *Plugin) Read(ctx context.Context, req *resource.ReadRequest) (*resource
 		Description: lxcdata.Description,
 		Cores:       lxcdata.Cores,
 		Memory:      lxcdata.Memory,
+		OnBoot:      lxcdata.OnBoot,
 	}
 
 	propsJSON, err := json.Marshal(properties)
@@ -283,6 +288,9 @@ func (p *Plugin) Update(ctx context.Context, req *resource.UpdateRequest) (*reso
 		"cores":       {strconv.Itoa(desir.Cores)},
 		"memory":      {strconv.Itoa(desir.Memory)},
 		"description": {desir.Description},
+	}
+	if prior.OnBoot != desir.OnBoot {
+		urlparams.Add("onboot", strconv.Itoa(desir.OnBoot))
 	}
 
 	_, err = authenticatedRequest("PUT", config.URL+"/api2/json/nodes/"+config.NODE+"/lxc/"+desir.VMID+"/config", createAuthorizationString(username, token), urlparams)

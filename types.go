@@ -14,6 +14,7 @@ type LXCProperties struct {
 	OSTemplate  string `json:"ostemplate,omitempty"`
 	Cores       int    `json:"cores"`
 	Memory      int    `json:"memory"`
+	OnBoot      int    `json:"onboot"`
 }
 
 type ReadRequest struct {
@@ -71,6 +72,7 @@ type StatusLXCConfig struct {
 	Swap        int    `json:"swap"`
 	Description string `json:"description"`
 	Digest      string `json:"digest"`
+	OnBoot      int    `json:"onboot"`
 }
 
 type StatusLXCConfigResponse struct {

@@ -78,7 +78,7 @@ func TestRead(t *testing.T) {
 	plugin := &Plugin{}
 
 	req := &resource.ReadRequest{
-		NativeID:     strconv.Itoa(120),
+		NativeID:     strconv.Itoa(200),
 		ResourceType: "PROXMOX::Service::LXC",
 		TargetConfig: testTargetConfig(),
 	}
@@ -95,12 +95,14 @@ func TestRead(t *testing.T) {
 	require.NoError(t, err, "json should be parsable")
 
 	require.NoError(t, err, "Properties should be valid JSON")
-	require.Equal(t, "ntfy", props["hostname"], "hostname should match")
-	require.Equal(t, strconv.Itoa(120), props["vmid"], "vmid should match")
+	require.Equal(t, "testlxc", props["hostname"], "hostname should match")
+	require.Equal(t, strconv.Itoa(200), props["vmid"], "vmid should match")
 	const core_num float64 = 1
 	require.Equal(t, core_num, props["cores"], "cores should match")
-	const mem_num float64 = 192
+	const mem_num float64 = 512
 	require.Equal(t, mem_num, props["memory"], "memory should match")
+	const onboot float64 = 0
+	require.Equal(t, onboot, props["onboot"], "memory should match")
 }
 
 func TestUpdate(t *testing.T) {
@@ -123,6 +125,7 @@ func TestUpdate(t *testing.T) {
 		"ostemplate":  "local:vztmpl/alpine-3.22-default_20250617_amd64.tar.xz",
 		"cores":       2,
 		"memory":      1024,
+		"onboot":      1,
 	})
 
 	req := &resource.UpdateRequest{
@@ -153,6 +156,8 @@ func TestUpdate(t *testing.T) {
 	require.Equal(t, core_num, props["cores"], "cores should have changed")
 	const mem_num float64 = 1024
 	require.Equal(t, mem_num, props["memory"], "memory should have changed")
+	const onboot float64 = 1
+	require.Equal(t, onboot, props["onboot"], "onboot should have changed")
 }
 
 func TestList(t *testing.T) {

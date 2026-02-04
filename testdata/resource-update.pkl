@@ -33,5 +33,6 @@ forma {
     ostemplate = "local:vztmpl/alpine-3.22-default_20250617_amd64.tar.xz"
     cores = 2
     memory = 1024
+    onboot = 1
   }
 }
