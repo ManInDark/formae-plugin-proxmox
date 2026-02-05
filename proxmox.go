@@ -71,14 +71,7 @@ func (p *Plugin) Delete(ctx context.Context, req *resource.DeleteRequest) (*reso
 }
 
 func (p *Plugin) Status(ctx context.Context, req *resource.StatusRequest) (*resource.StatusResult, error) {
-	return &resource.StatusResult{
-		ProgressResult: &resource.ProgressResult{
-			Operation:       resource.OperationCheckStatus,
-			OperationStatus: resource.OperationStatusFailure,
-			ErrorCode:       resource.OperationErrorCodeInternalFailure,
-			StatusMessage:   "Status not implemented",
-		},
-	}, ErrNotImplemented
+	return p.StatusLXC(ctx, req)
 }
 
 // Called during discovery to find unmanaged resources.

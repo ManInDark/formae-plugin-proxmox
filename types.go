@@ -78,3 +78,7 @@ type StatusLXCConfig struct {
 type StatusLXCConfigResponse struct {
 	Data StatusLXCConfig `json:"data"`
 }
+
+type ProxmoxDataResponse struct {
+	Data string `json:"data"`
+}

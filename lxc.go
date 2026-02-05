@@ -80,7 +80,22 @@ func (p *Plugin) CreateLXC(ctx context.Context, req *resource.CreateRequest) (*r
 		urlparams.Add("onboot", strconv.Itoa(props.OnBoot))
 	}
 
-	_, err = authenticatedRequest(http.MethodPost, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", createAuthorizationString(username, token), urlparams)
+	data, err := authenticatedRequest(http.MethodPost, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", createAuthorizationString(username, token), urlparams)
+
+	if err != nil {
+		return &resource.CreateResult{
+			ProgressResult: &resource.ProgressResult{
+				Operation:       resource.OperationCreate,
+				OperationStatus: resource.OperationStatusFailure,
+				ErrorCode:       resource.OperationErrorCodeInternalFailure,
+				StatusMessage:   err.Error(),
+			},
+		}, err
+	}
+
+	var taskData ProxmoxDataResponse
+
+	err = json.Unmarshal(data, &taskData)
 
 	if err != nil {
 		return &resource.CreateResult{
@@ -97,6 +112,7 @@ func (p *Plugin) CreateLXC(ctx context.Context, req *resource.CreateRequest) (*r
 		ProgressResult: &resource.ProgressResult{
 			Operation:       resource.OperationCreate,
 			OperationStatus: resource.OperationStatusSuccess,
+			RequestID:       taskData.Data,
 			NativeID:        props.VMID,
 		},
 	}, nil
@@ -313,6 +329,78 @@ func (p *Plugin) DeleteLXC(ctx context.Context, req *resource.DeleteRequest) (*r
 		},
 	}, nil
 
+}
+
+type RequestStatusProxmoxResponse struct {
+	PId        int    `json:"pid"`
+	UpId       string `json:"upid"`
+	Node       string `json:"node"`
+	PStart     int    `json:"pstart"`
+	Status     string `json:"status"`
+	Id         string `json:"id"`
+	StartTime  int    `json:"starttime"`
+	ExitStatus string `json:"exitstatus"`
+	User       string `json:"user"`
+	Type       string `json:"type"`
+}
+
+func (p *Plugin) StatusLXC(ctx context.Context, req *resource.StatusRequest) (*resource.StatusResult, error) {
+	config, err := parseTargetConfig(req.TargetConfig)
+	if err != nil {
+		log.Println(err.Error())
+		return &resource.StatusResult{
+			ProgressResult: &resource.ProgressResult{
+				Operation:       resource.OperationCheckStatus,
+				OperationStatus: resource.OperationStatusFailure,
+				ErrorCode:       resource.OperationErrorCodeInternalFailure,
+				StatusMessage:   err.Error(),
+			},
+		}, err
+	}
+
+	username, token, err := getCredentials()
+	if err != nil {
+		return &resource.StatusResult{
+			ProgressResult: &resource.ProgressResult{
+				Operation:       resource.OperationCheckStatus,
+				OperationStatus: resource.OperationStatusFailure,
+				ErrorCode:       resource.OperationErrorCodeInternalFailure,
+				StatusMessage:   err.Error(),
+			},
+		}, err
+	}
+
+	var proxmoxResponse RequestStatusProxmoxResponse
+
+	data, err := authenticatedRequest(http.MethodDelete, config.URL+"/api2/json/nodes/"+config.NODE+"/tasks/"+req.RequestID+"/status", createAuthorizationString(username, token), nil)
+
+	err = json.Unmarshal(data, &proxmoxResponse)
+	if err != nil {
+		return &resource.StatusResult{
+			ProgressResult: &resource.ProgressResult{
+				Operation:       resource.OperationCheckStatus,
+				OperationStatus: resource.OperationStatusFailure,
+				ErrorCode:       resource.OperationErrorCodeInternalFailure,
+				StatusMessage:   err.Error(),
+			},
+		}, err
+	}
+
+	var status resource.OperationStatus
+
+	switch proxmoxResponse.Status {
+	case "running":
+		status = resource.OperationStatusInProgress
+	case "stopped":
+		status = resource.OperationStatusSuccess
+	}
+
+	return &resource.StatusResult{
+		ProgressResult: &resource.ProgressResult{
+			Operation:       resource.OperationCheckStatus,
+			OperationStatus: status,
+		},
+	}, nil
 }
 
 func (p *Plugin) ListLXC(ctx context.Context, req *resource.ListRequest) (*resource.ListResult, error) {
