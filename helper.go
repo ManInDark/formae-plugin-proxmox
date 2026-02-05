@@ -37,20 +37,6 @@ func getCredentials() (username, token string, err error) {
 	return username, token, nil
 }
 
-func parseLXCProperties(data json.RawMessage) (*LXCProperties, error) {
-	var props LXCProperties
-	if err := json.Unmarshal(data, &props); err != nil {
-		return nil, fmt.Errorf("invalid file properties: %w", err)
-	}
-	if props.VMID == "" {
-		return nil, fmt.Errorf("vmid missing")
-	}
-	if props.Hostname == "" {
-		return nil, fmt.Errorf("name missing")
-	}
-	return &props, nil
-}
-
 func createAuthorizationString(username, token string) string {
 	return "PVEAPIToken=" + username + "=" + token
 }
