@@ -15,12 +15,12 @@ open class Config {
 }
 
 @formae.ResourceHint {
-    type = "PROXMOX::Service::LXC"
+    type = "PROXMOX::Compute::LXC"
     identifier = "$.vmid"
     discoverable = true
 }
 class LXC extends formae.Resource {
-    fixed hidden type: String = "PROXMOX::Service::LXC"
+    fixed hidden type: String = "PROXMOX::Compute::LXC"
 
     @formae.FieldHint { createOnly = true }
     vmid: String

@@ -41,7 +41,7 @@ func TestCreate(t *testing.T) {
 	require.NoError(t, err, "failed to marshal properties")
 
 	req := &resource.CreateRequest{
-		ResourceType: "PROXMOX::Service::LXC",
+		ResourceType: "PROXMOX::Compute::LXC",
 		Properties:   propertiesJSON,
 		TargetConfig: testTargetConfig(),
 	}
@@ -79,7 +79,7 @@ func TestRead(t *testing.T) {
 
 	req := &resource.ReadRequest{
 		NativeID:     strconv.Itoa(200),
-		ResourceType: "PROXMOX::Service::LXC",
+		ResourceType: "PROXMOX::Compute::LXC",
 		TargetConfig: testTargetConfig(),
 	}
 
@@ -130,7 +130,7 @@ func TestUpdate(t *testing.T) {
 
 	req := &resource.UpdateRequest{
 		NativeID:          "200",
-		ResourceType:      "PROXMOX::Service::LXC",
+		ResourceType:      "PROXMOX::Compute::LXC",
 		PriorProperties:   priorProperties,
 		DesiredProperties: desiredProperties,
 		TargetConfig:      testTargetConfig(),
@@ -143,7 +143,7 @@ func TestUpdate(t *testing.T) {
 
 	readReq := &resource.ReadRequest{
 		NativeID:     strconv.Itoa(200),
-		ResourceType: "PROXMOX::Service::LXC",
+		ResourceType: "PROXMOX::Compute::LXC",
 		TargetConfig: testTargetConfig(),
 	}
 
@@ -165,7 +165,7 @@ func TestList(t *testing.T) {
 	plugin := &Plugin{}
 
 	result, err := plugin.List(ctx, &resource.ListRequest{
-		ResourceType: "PROXMOX::Service::LXC",
+		ResourceType: "PROXMOX::Compute::LXC",
 		TargetConfig: testTargetConfig(),
 	})
 	require.NoError(t, err, "ListRequest should not return an error")
@@ -190,7 +190,7 @@ func TestDelete(t *testing.T) {
 	}
 
 	result, err := plugin.Delete(ctx, &resource.DeleteRequest{
-		ResourceType: "PROXMOX::Service::LXC",
+		ResourceType: "PROXMOX::Compute::LXC",
 		TargetConfig: testTargetConfig(),
 		NativeID:     "200",
 	})
