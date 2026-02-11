@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -50,24 +50,24 @@ func authenticatedRequest(method, url, authorization string, urlparams url.Value
 
 	request, err := http.NewRequest(method, url, body)
 	if err != nil {
-		log.Println("Error: ", err)
+		slog.Error("Error creating request", "err", err)
 		return nil, err
 	}
 	request.Header.Set("Authorization", authorization)
 
 	resp, err := client.Do(request)
 	if err != nil {
-		log.Println("Error: ", err)
+		slog.Error("Error executing request", "err", err)
 		return nil, err
 	}
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Println("Error: ", err)
+		slog.Error("Error reading response", "err", err)
 		return nil, err
 	}
 
-	log.Println("URL: ", method, "Status Code:", resp.Status, "Body: ", string(data))
+	slog.Debug("Executed Request", "url", method, "status code", resp.Status, "body", string(data))
 
 	return data, nil
 }

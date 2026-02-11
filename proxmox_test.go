@@ -3,10 +3,9 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -170,7 +169,7 @@ func TestList(t *testing.T) {
 	})
 	require.NoError(t, err, "ListRequest should not return an error")
 
-	log.Printf("Received Ids: %s", strings.Join(result.NativeIDs, ", "))
+	slog.Info("Received Ids", "ids", result.NativeIDs)
 
 	require.Contains(t, result.NativeIDs, "200", "List should include created LXC")
 }

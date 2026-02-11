@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -29,7 +29,7 @@ func parseLXCProperties(data json.RawMessage) (*LXCProperties, error) {
 func (p *Plugin) CreateLXC(ctx context.Context, req *resource.CreateRequest) (*resource.CreateResult, error) {
 	props, err := parseLXCProperties(req.Properties)
 	if err != nil {
-		log.Println(err.Error())
+		slog.Error(err.Error())
 		return &resource.CreateResult{
 			ProgressResult: &resource.ProgressResult{
 				Operation:       resource.OperationCreate,
@@ -42,7 +42,7 @@ func (p *Plugin) CreateLXC(ctx context.Context, req *resource.CreateRequest) (*r
 
 	config, err := parseTargetConfig(req.TargetConfig)
 	if err != nil {
-		log.Println(err.Error())
+		slog.Error(err.Error())
 		return &resource.CreateResult{
 			ProgressResult: &resource.ProgressResult{
 				Operation:       resource.OperationCreate,
@@ -55,7 +55,7 @@ func (p *Plugin) CreateLXC(ctx context.Context, req *resource.CreateRequest) (*r
 
 	username, token, err := getCredentials()
 	if err != nil {
-		log.Println(err.Error())
+		slog.Error(err.Error())
 		return &resource.CreateResult{
 			ProgressResult: &resource.ProgressResult{
 				Operation:       resource.OperationCreate,
@@ -83,6 +83,7 @@ func (p *Plugin) CreateLXC(ctx context.Context, req *resource.CreateRequest) (*r
 	data, err := authenticatedRequest(http.MethodPost, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", createAuthorizationString(username, token), urlparams)
 
 	if err != nil {
+		slog.Error(err.Error())
 		return &resource.CreateResult{
 			ProgressResult: &resource.ProgressResult{
 				Operation:       resource.OperationCreate,
@@ -98,6 +99,7 @@ func (p *Plugin) CreateLXC(ctx context.Context, req *resource.CreateRequest) (*r
 	err = json.Unmarshal(data, &taskData)
 
 	if err != nil {
+		slog.Error(err.Error())
 		return &resource.CreateResult{
 			ProgressResult: &resource.ProgressResult{
 				Operation:       resource.OperationCreate,
@@ -121,6 +123,7 @@ func (p *Plugin) CreateLXC(ctx context.Context, req *resource.CreateRequest) (*r
 func (p *Plugin) ReadLXC(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResult, error) {
 	username, token, err := getCredentials()
 	if err != nil {
+		slog.Error(err.Error())
 		return &resource.ReadResult{
 			ErrorCode: resource.OperationErrorCodeInvalidRequest,
 		}, err
@@ -128,11 +131,13 @@ func (p *Plugin) ReadLXC(ctx context.Context, req *resource.ReadRequest) (*resou
 
 	config, err := parseTargetConfig(req.TargetConfig)
 	if err != nil {
+		slog.Error(err.Error())
 		return &resource.ReadResult{}, nil
 	}
 
 	data, err := authenticatedRequest(http.MethodGet, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc/"+req.NativeID+"/config", createAuthorizationString(username, token), nil)
 	if err != nil {
+		slog.Error(err.Error())
 		return &resource.ReadResult{
 			ErrorCode: resource.OperationErrorCodeNetworkFailure,
 		}, err
@@ -142,7 +147,7 @@ func (p *Plugin) ReadLXC(ctx context.Context, req *resource.ReadRequest) (*resou
 
 	err = json.Unmarshal(data, &props)
 	if err != nil {
-		log.Println("Error unmarshaling json: ", data)
+		slog.Error("Error unmarshalling json", "data", data, "err", err.Error())
 		return &resource.ReadResult{
 			ErrorCode: resource.OperationErrorCodeInvalidRequest,
 		}, err
@@ -161,6 +166,7 @@ func (p *Plugin) ReadLXC(ctx context.Context, req *resource.ReadRequest) (*resou
 
 	propsJSON, err := json.Marshal(properties)
 	if err != nil {
+		slog.Error(err.Error())
 		return &resource.ReadResult{
 			ErrorCode: resource.OperationErrorCodeInternalFailure,
 		}, err
@@ -175,6 +181,7 @@ func (p *Plugin) ReadLXC(ctx context.Context, req *resource.ReadRequest) (*resou
 func (p *Plugin) UpdateLXC(ctx context.Context, req *resource.UpdateRequest) (*resource.UpdateResult, error) {
 	prior, err := parseLXCProperties(req.PriorProperties)
 	if err != nil {
+		slog.Error(err.Error())
 		return &resource.UpdateResult{
 			ProgressResult: &resource.ProgressResult{
 				Operation:       resource.OperationUpdate,
@@ -187,6 +194,7 @@ func (p *Plugin) UpdateLXC(ctx context.Context, req *resource.UpdateRequest) (*r
 
 	desir, err := parseLXCProperties(req.DesiredProperties)
 	if err != nil {
+		slog.Error(err.Error())
 		return &resource.UpdateResult{
 			ProgressResult: &resource.ProgressResult{
 				Operation:       resource.OperationUpdate,
@@ -218,7 +226,7 @@ func (p *Plugin) UpdateLXC(ctx context.Context, req *resource.UpdateRequest) (*r
 
 	config, err := parseTargetConfig(req.TargetConfig)
 	if err != nil {
-		log.Println(err.Error())
+		slog.Error(err.Error())
 		return &resource.UpdateResult{
 			ProgressResult: &resource.ProgressResult{
 				Operation:       resource.OperationCreate,
@@ -231,6 +239,7 @@ func (p *Plugin) UpdateLXC(ctx context.Context, req *resource.UpdateRequest) (*r
 
 	username, token, err := getCredentials()
 	if err != nil {
+		slog.Error(err.Error())
 		return &resource.UpdateResult{
 			ProgressResult: &resource.ProgressResult{
 				Operation:       resource.OperationUpdate,
@@ -255,6 +264,7 @@ func (p *Plugin) UpdateLXC(ctx context.Context, req *resource.UpdateRequest) (*r
 	_, err = authenticatedRequest("PUT", config.URL+"/api2/json/nodes/"+config.NODE+"/lxc/"+desir.VMID+"/config", createAuthorizationString(username, token), urlparams)
 
 	if err != nil {
+		slog.Error(err.Error())
 		return &resource.UpdateResult{
 			ProgressResult: &resource.ProgressResult{
 				Operation:       resource.OperationCreate,
@@ -284,7 +294,7 @@ func (p *Plugin) UpdateLXC(ctx context.Context, req *resource.UpdateRequest) (*r
 func (p *Plugin) DeleteLXC(ctx context.Context, req *resource.DeleteRequest) (*resource.DeleteResult, error) {
 	config, err := parseTargetConfig(req.TargetConfig)
 	if err != nil {
-		log.Println(err.Error())
+		slog.Error(err.Error())
 		return &resource.DeleteResult{
 			ProgressResult: &resource.ProgressResult{
 				Operation:       resource.OperationCreate,
@@ -297,7 +307,7 @@ func (p *Plugin) DeleteLXC(ctx context.Context, req *resource.DeleteRequest) (*r
 
 	username, token, err := getCredentials()
 	if err != nil {
-		log.Println(err.Error())
+		slog.Error(err.Error())
 		return &resource.DeleteResult{
 			ProgressResult: &resource.ProgressResult{
 				Operation:       resource.OperationCreate,
@@ -311,6 +321,7 @@ func (p *Plugin) DeleteLXC(ctx context.Context, req *resource.DeleteRequest) (*r
 	_, err = authenticatedRequest(http.MethodDelete, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc/"+req.NativeID, createAuthorizationString(username, token), nil)
 
 	if err != nil {
+		slog.Error(err.Error())
 		return &resource.DeleteResult{
 			ProgressResult: &resource.ProgressResult{
 				Operation:       resource.OperationCreate,
@@ -347,7 +358,7 @@ type RequestStatusProxmoxResponse struct {
 func (p *Plugin) StatusLXC(ctx context.Context, req *resource.StatusRequest) (*resource.StatusResult, error) {
 	config, err := parseTargetConfig(req.TargetConfig)
 	if err != nil {
-		log.Println(err.Error())
+		slog.Error(err.Error())
 		return &resource.StatusResult{
 			ProgressResult: &resource.ProgressResult{
 				Operation:       resource.OperationCheckStatus,
@@ -360,6 +371,7 @@ func (p *Plugin) StatusLXC(ctx context.Context, req *resource.StatusRequest) (*r
 
 	username, token, err := getCredentials()
 	if err != nil {
+		slog.Error(err.Error())
 		return &resource.StatusResult{
 			ProgressResult: &resource.ProgressResult{
 				Operation:       resource.OperationCheckStatus,
@@ -376,6 +388,7 @@ func (p *Plugin) StatusLXC(ctx context.Context, req *resource.StatusRequest) (*r
 
 	err = json.Unmarshal(data, &proxmoxResponse)
 	if err != nil {
+		slog.Error(err.Error())
 		return &resource.StatusResult{
 			ProgressResult: &resource.ProgressResult{
 				Operation:       resource.OperationCheckStatus,
@@ -407,6 +420,7 @@ func (p *Plugin) ListLXC(ctx context.Context, req *resource.ListRequest) (*resou
 
 	username, token, err := getCredentials()
 	if err != nil {
+		slog.Error(err.Error())
 		return &resource.ListResult{
 			NativeIDs: []string{},
 		}, err
@@ -414,6 +428,7 @@ func (p *Plugin) ListLXC(ctx context.Context, req *resource.ListRequest) (*resou
 
 	config, err := parseTargetConfig(req.TargetConfig)
 	if err != nil {
+		slog.Error(err.Error())
 		return &resource.ListResult{
 			NativeIDs: []string{},
 		}, err
@@ -423,6 +438,7 @@ func (p *Plugin) ListLXC(ctx context.Context, req *resource.ListRequest) (*resou
 
 	data, err := authenticatedRequest(http.MethodGet, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", createAuthorizationString(username, token), nil)
 	if err != nil {
+		slog.Error(err.Error())
 		return &resource.ListResult{
 			NativeIDs: []string{},
 		}, err
