@@ -37,6 +37,15 @@ func getCredentials() (username, token string, err error) {
 	return username, token, nil
 }
 
+func setupLogging() {
+	programLevel := new(slog.LevelVar)
+	env := os.Getenv("PROXMOX_LOG_LEVEL")
+	programLevel.UnmarshalText([]byte(env))
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: programLevel}))
+	slog.Info("Set log level", "level", programLevel)
+	slog.SetDefault(logger)
+}
+
 func createAuthorizationString(username, token string) string {
 	return "PVEAPIToken=" + username + "=" + token
 }

@@ -55,26 +55,32 @@ func (p *Plugin) LabelConfig() plugin.LabelConfig {
 // =============================================================================
 
 func (p *Plugin) Create(ctx context.Context, req *resource.CreateRequest) (*resource.CreateResult, error) {
+	setupLogging()
 	return p.CreateLXC(ctx, req)
 }
 
 func (p *Plugin) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResult, error) {
+	setupLogging()
 	return p.ReadLXC(ctx, req)
 }
 
 func (p *Plugin) Update(ctx context.Context, req *resource.UpdateRequest) (*resource.UpdateResult, error) {
+	setupLogging()
 	return p.UpdateLXC(ctx, req)
 }
 
 func (p *Plugin) Delete(ctx context.Context, req *resource.DeleteRequest) (*resource.DeleteResult, error) {
+	setupLogging()
 	return p.DeleteLXC(ctx, req)
 }
 
 func (p *Plugin) Status(ctx context.Context, req *resource.StatusRequest) (*resource.StatusResult, error) {
+	setupLogging()
 	return p.StatusLXC(ctx, req)
 }
 
 // Called during discovery to find unmanaged resources.
 func (p *Plugin) List(ctx context.Context, req *resource.ListRequest) (*resource.ListResult, error) {
+	setupLogging()
 	return p.ListLXC(ctx, req)
 }
