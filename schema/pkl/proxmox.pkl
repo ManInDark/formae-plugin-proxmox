@@ -29,6 +29,9 @@ class LXC extends formae.Resource {
     ostemplate: String?
 
     @formae.FieldHint {}
+    password: String?
+
+    @formae.FieldHint {}
     hostname: String
 
     @formae.FieldHint {}

@@ -12,6 +12,7 @@ type LXCProperties struct {
 	Hostname    string `json:"hostname"`
 	Description string `json:"description,omitempty"`
 	OSTemplate  string `json:"ostemplate,omitempty"`
+	Password    string `json:"password,omitempty"`
 	Cores       int    `json:"cores"`
 	Memory      int    `json:"memory"`
 	OnBoot      int    `json:"onboot"`

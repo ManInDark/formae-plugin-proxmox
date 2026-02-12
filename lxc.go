@@ -69,6 +69,7 @@ func (p *Plugin) CreateLXC(ctx context.Context, req *resource.CreateRequest) (*r
 	urlparams := url.Values{
 		"vmid":       {props.VMID},
 		"ostemplate": {props.OSTemplate},
+		"password":   {props.Password},
 		"hostname":   {props.Hostname},
 		"cores":      {strconv.Itoa(props.Cores)},
 		"memory":     {strconv.Itoa(props.Memory)},

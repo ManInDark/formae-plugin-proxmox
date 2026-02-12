@@ -33,6 +33,7 @@ forma {
     hostname = "test-lxc"
     description = "no description provided"
     ostemplate = "local:vztmpl/alpine-3.22-default_20250617_amd64.tar.xz"
+    password = "abcd"
     cores = 1
     memory = 512
   }

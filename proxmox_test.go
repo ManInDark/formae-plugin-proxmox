@@ -31,6 +31,7 @@ func TestCreate(t *testing.T) {
 		"hostname":    "testlxc",
 		"description": "none",
 		"ostemplate":  "local:vztmpl/alpine-3.22-default_20250617_amd64.tar.xz",
+		"password":    "password",
 		"cores":       1,
 		"memory":      512,
 	}
