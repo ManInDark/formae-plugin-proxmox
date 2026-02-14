@@ -8,14 +8,15 @@ type TargetConfig struct {
 }
 
 type LXCProperties struct {
-	VMID        string `json:"vmid"`
-	Hostname    string `json:"hostname"`
-	Description string `json:"description,omitempty"`
-	OSTemplate  string `json:"ostemplate,omitempty"`
-	Password    string `json:"password,omitempty"`
-	Cores       int    `json:"cores"`
-	Memory      int    `json:"memory"`
-	OnBoot      int    `json:"onboot"`
+	VMID        string   `json:"vmid"`
+	Hostname    string   `json:"hostname"`
+	Description string   `json:"description,omitempty"`
+	OSTemplate  string   `json:"ostemplate,omitempty"`
+	Password    string   `json:"password,omitempty"`
+	Cores       int      `json:"cores"`
+	Memory      int      `json:"memory"`
+	OnBoot      int      `json:"onboot"`
+	SSHKeys     []string `json:"sshkeys"`
 }
 
 type ReadRequest struct {

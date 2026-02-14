@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/platform-engineering-labs/formae/pkg/plugin/resource"
 )
@@ -67,12 +68,13 @@ func (p *Plugin) CreateLXC(ctx context.Context, req *resource.CreateRequest) (*r
 	}
 
 	urlparams := url.Values{
-		"vmid":       {props.VMID},
-		"ostemplate": {props.OSTemplate},
-		"password":   {props.Password},
-		"hostname":   {props.Hostname},
-		"cores":      {strconv.Itoa(props.Cores)},
-		"memory":     {strconv.Itoa(props.Memory)},
+		"vmid":            {props.VMID},
+		"ostemplate":      {props.OSTemplate},
+		"password":        {props.Password},
+		"hostname":        {props.Hostname},
+		"cores":           {strconv.Itoa(props.Cores)},
+		"memory":          {strconv.Itoa(props.Memory)},
+		"ssh-public-keys": {strings.Join(props.SSHKeys, "\n")},
 	}
 	if props.Description != "" {
 		urlparams.Add("description", props.Description)
