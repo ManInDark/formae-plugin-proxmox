@@ -319,7 +319,7 @@ func (p *Plugin) DeleteLXC(ctx context.Context, req *resource.DeleteRequest) (*r
 		}, err
 	}
 
-	_, err = authenticatedRequest(http.MethodDelete, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc/"+req.NativeID, createAuthorizationString(username, token), nil)
+	_, err = authenticatedRequest(http.MethodDelete, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc/"+req.NativeID+"?force=1&purge=1", createAuthorizationString(username, token), nil)
 
 	if err != nil {
 		slog.Error(err.Error())

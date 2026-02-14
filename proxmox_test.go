@@ -195,8 +195,8 @@ func TestDelete(t *testing.T) {
 		NativeID:     "200",
 	})
 
-	require.NoError(t, err, "Create should not return error")
-	require.NotNil(t, result.ProgressResult, "Create should return ProgressResult")
+	require.NoError(t, err, "Delete should not return error")
+	require.NotNil(t, result.ProgressResult, "Delete should return ProgressResult")
 
 	require.Eventually(t, func() bool {
 		var props StatusGeneralResponse
@@ -213,5 +213,5 @@ func TestDelete(t *testing.T) {
 		}
 
 		return true
-	}, 10*time.Second, time.Second, "Create operation should complete successfully")
+	}, 10*time.Second, time.Second, "Delete operation should complete successfully")
 }
