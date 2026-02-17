@@ -13,6 +13,8 @@ import (
 	"github.com/platform-engineering-labs/formae/pkg/plugin/resource"
 )
 
+const MAX_NETWORK_COUNT = 10
+
 func parseLXCProperties(data json.RawMessage) (*LXCProperties, error) {
 	var props LXCProperties
 	if err := json.Unmarshal(data, &props); err != nil {
@@ -81,6 +83,10 @@ func (p *Plugin) CreateLXC(ctx context.Context, req *resource.CreateRequest) (*r
 	}
 	if props.OnBoot != 0 {
 		urlparams.Add("onboot", strconv.Itoa(props.OnBoot))
+	}
+
+	for i := range min(MAX_NETWORK_COUNT, len(props.Networks)) {
+		urlparams.Add(fmt.Sprintf("net%d", i), props.Networks[i])
 	}
 
 	data, err := authenticatedRequest(http.MethodPost, config.URL+"/api2/json/nodes/"+config.NODE+"/lxc", createAuthorizationString(username, token), urlparams)
@@ -158,6 +164,39 @@ func (p *Plugin) ReadLXC(ctx context.Context, req *resource.ReadRequest) (*resou
 
 	lxcdata := props.Data
 
+	networks := []string{}
+
+	if len(lxcdata.Net0) > 0 {
+		networks = append(networks, lxcdata.Net0)
+	}
+	if len(lxcdata.Net1) > 0 {
+		networks = append(networks, lxcdata.Net1)
+	}
+	if len(lxcdata.Net2) > 0 {
+		networks = append(networks, lxcdata.Net2)
+	}
+	if len(lxcdata.Net3) > 0 {
+		networks = append(networks, lxcdata.Net3)
+	}
+	if len(lxcdata.Net4) > 0 {
+		networks = append(networks, lxcdata.Net4)
+	}
+	if len(lxcdata.Net5) > 0 {
+		networks = append(networks, lxcdata.Net5)
+	}
+	if len(lxcdata.Net6) > 0 {
+		networks = append(networks, lxcdata.Net6)
+	}
+	if len(lxcdata.Net7) > 0 {
+		networks = append(networks, lxcdata.Net7)
+	}
+	if len(lxcdata.Net8) > 0 {
+		networks = append(networks, lxcdata.Net8)
+	}
+	if len(lxcdata.Net9) > 0 {
+		networks = append(networks, lxcdata.Net9)
+	}
+
 	properties := LXCProperties{
 		VMID:        req.NativeID,
 		Hostname:    lxcdata.Hostname,
@@ -165,6 +204,7 @@ func (p *Plugin) ReadLXC(ctx context.Context, req *resource.ReadRequest) (*resou
 		Cores:       lxcdata.Cores,
 		Memory:      lxcdata.Memory,
 		OnBoot:      lxcdata.OnBoot,
+		Networks:    networks,
 	}
 
 	propsJSON, err := json.Marshal(properties)
@@ -263,6 +303,16 @@ func (p *Plugin) UpdateLXC(ctx context.Context, req *resource.UpdateRequest) (*r
 	if prior.OnBoot != desir.OnBoot {
 		urlparams.Add("onboot", strconv.Itoa(desir.OnBoot))
 	}
+
+	toDelete := []string{}
+	for i := range min(MAX_NETWORK_COUNT, len(desir.Networks)) {
+		if i < len(desir.Networks) {
+			urlparams.Add(fmt.Sprintf("net%d", i), desir.Networks[i])
+		} else {
+			toDelete = append(toDelete, fmt.Sprintf("net%d", i))
+		}
+	}
+	urlparams.Add("delete", strings.Join(toDelete, ","))
 
 	_, err = authenticatedRequest("PUT", config.URL+"/api2/json/nodes/"+config.NODE+"/lxc/"+desir.VMID+"/config", createAuthorizationString(username, token), urlparams)
 

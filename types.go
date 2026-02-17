@@ -17,6 +17,7 @@ type LXCProperties struct {
 	Memory      int      `json:"memory"`
 	OnBoot      int      `json:"onboot"`
 	SSHKeys     []string `json:"sshkeys"`
+	Networks    []string `json:"networks"`
 }
 
 type ReadRequest struct {
@@ -75,6 +76,16 @@ type StatusLXCConfig struct {
 	Description string `json:"description"`
 	Digest      string `json:"digest"`
 	OnBoot      int    `json:"onboot"`
+	Net0        string `json:"net0,omitempty"`
+	Net1        string `json:"net1,omitempty"`
+	Net2        string `json:"net2,omitempty"`
+	Net3        string `json:"net3,omitempty"`
+	Net4        string `json:"net4,omitempty"`
+	Net5        string `json:"net5,omitempty"`
+	Net6        string `json:"net6,omitempty"`
+	Net7        string `json:"net7,omitempty"`
+	Net8        string `json:"net8,omitempty"`
+	Net9        string `json:"net9,omitempty"`
 }
 
 type StatusLXCConfigResponse struct {

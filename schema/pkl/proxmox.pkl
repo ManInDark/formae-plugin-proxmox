@@ -49,4 +49,7 @@ class LXC extends formae.Resource {
     @formae.FieldHint {}
     sshkeys: Listing<String>?
 
+    @formae.FieldHint {}
+    networks: Listing<String>?
+
 }

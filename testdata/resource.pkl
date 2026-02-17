@@ -36,5 +36,9 @@ forma {
     password = "abcd"
     cores = 1
     memory = 512
+    networks = new Listing<String> {
+      "name=first,hwaddr=BC:24:11:FD:90:BF,bridge=internal"
+      "name=second,hwaddr=BC:24:11:FD:90:BF,bridge=internal"
+    }
   }
 }

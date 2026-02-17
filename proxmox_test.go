@@ -34,6 +34,7 @@ func TestCreate(t *testing.T) {
 		"password":    "password",
 		"cores":       1,
 		"memory":      512,
+		"networks":    []string{"name=test,hwaddr=BC:24:11:FD:90:BF,bridge=internal,firewall=1"},
 	}
 
 	propertiesJSON, err := json.Marshal(properties)
@@ -103,6 +104,7 @@ func TestRead(t *testing.T) {
 	require.Equal(t, mem_num, props["memory"], "memory should match")
 	const onboot float64 = 0
 	require.Equal(t, onboot, props["onboot"], "memory should match")
+	require.NotEqual(t, nil, props["networks"], "network should be defined")
 }
 
 func TestUpdate(t *testing.T) {
@@ -116,6 +118,7 @@ func TestUpdate(t *testing.T) {
 		"ostemplate":  "local:vztmpl/alpine-3.22-default_20250617_amd64.tar.xz",
 		"cores":       1,
 		"memory":      512,
+		"networks":    []string{"name=test,hwaddr=BC:24:11:FD:90:BF,bridge=internal,firewall=1"},
 	})
 
 	desiredProperties, _ := json.Marshal(map[string]any{
@@ -126,6 +129,7 @@ func TestUpdate(t *testing.T) {
 		"cores":       2,
 		"memory":      1024,
 		"onboot":      1,
+		"networks":    []string{"name=test1,hwaddr=BC:24:11:FD:90:BF,bridge=internal,firewall=1"},
 	})
 
 	req := &resource.UpdateRequest{

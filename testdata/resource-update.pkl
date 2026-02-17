@@ -34,5 +34,8 @@ forma {
     cores = 2
     memory = 1024
     onboot = 1
+    networks = new Listing<String> {
+      "name=first,hwaddr=BC:24:11:FD:90:BF,bridge=internal"
+    }
   }
 }
