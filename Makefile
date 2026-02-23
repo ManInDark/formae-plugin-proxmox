@@ -123,3 +123,6 @@ conformance-test-discovery: install
 test-request:
 	curl -k -H "Authorization: PVEAPIToken=$$PROXMOX_USERNAME=$$PROXMOX_TOKEN" "https://proxmox.mid:8006/api2/json/nodes/proxmox/lxc" | jq
 	curl -k -H "Authorization: PVEAPIToken=$$PROXMOX_USERNAME=$$PROXMOX_TOKEN" "https://proxmox.mid:8006/api2/json/nodes/proxmox/lxc/200/config" | jq
+
+test-delete:
+	curl -k -H "Authorization: PVEAPIToken=$$PROXMOX_USERNAME=$$PROXMOX_TOKEN" "https://proxmox.mid:8006/api2/json/nodes/proxmox/lxc/210/config" -X PUT --data "delete=net0,net1,net2" | jq

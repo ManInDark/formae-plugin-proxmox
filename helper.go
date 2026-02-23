@@ -76,7 +76,7 @@ func authenticatedRequest(method, url, authorization string, urlparams url.Value
 		return nil, err
 	}
 
-	slog.Debug("Executed Request", "url", method, "status code", resp.Status, "body", string(data))
+	slog.Debug("Executed Request", "url", method, "params", urlparams, "status code", resp.Status, "body", string(data))
 
 	return data, nil
 }

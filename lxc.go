@@ -305,7 +305,7 @@ func (p *Plugin) UpdateLXC(ctx context.Context, req *resource.UpdateRequest) (*r
 	}
 
 	toDelete := []string{}
-	for i := range min(MAX_NETWORK_COUNT, len(desir.Networks)) {
+	for i := range min(MAX_NETWORK_COUNT, max(len(desir.Networks), len(prior.Networks))) {
 		if i < len(desir.Networks) {
 			urlparams.Add(fmt.Sprintf("net%d", i), desir.Networks[i])
 		} else {
