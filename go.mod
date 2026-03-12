@@ -3,7 +3,7 @@ module github.com/platform-engineering-labs/formae-plugin-proxmox
 go 1.25.0
 
 require (
-	github.com/platform-engineering-labs/formae/pkg/plugin v0.1.14
+	github.com/platform-engineering-labs/formae/pkg/plugin v0.1.15
 	github.com/platform-engineering-labs/formae/pkg/plugin-conformance-tests v0.1.21
 )
 
