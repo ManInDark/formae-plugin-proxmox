@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/platform-engineering-labs/formae/pkg/plugin v0.1.14
-	github.com/platform-engineering-labs/formae/pkg/plugin-conformance-tests v0.1.21
+	github.com/platform-engineering-labs/formae/pkg/plugin-conformance-tests v0.1.37
 )
 
 require (
@@ -35,7 +35,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // indirect
 	github.com/masterminds/semver v1.5.0 // indirect
 	github.com/platform-engineering-labs/formae/pkg/api/model v0.1.1 // indirect
-	github.com/platform-engineering-labs/formae/pkg/model v0.1.5 // indirect
+	github.com/platform-engineering-labs/formae/pkg/model v0.1.6 // indirect
 	github.com/stretchr/testify v1.11.1
 	github.com/theory/jsonpath v0.10.2 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
